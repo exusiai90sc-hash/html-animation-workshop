@@ -1,0 +1,13 @@
+{
+  "name": "baoan-animation-render-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "保安李长林动画的可移植软件预览工具",
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "sharp": "0.35.4",
+    "@napi-rs/canvas": "0.1.100"
+  }
+}

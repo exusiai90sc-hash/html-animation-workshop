@@ -8,12 +8,11 @@
  * ============================================================= */
 
 const S56 = {
-  hit1: 26.95, hit2: 28.02,
+  hit1: 25.50, hit2: 27.30,
   morph: [T.NOW - 0.2, T.NOW + 0.72],   // 扁担 → 步枪
   sweep: [T.NOW - 0.05, T.NOW + 0.55],
-  pivot0: [-90, 330], pivot1: [-70, 990],
-  ang0: 3.2 * DEG, ang1: -28 * DEG,
-  poleLen: 1480, ropeX: 1392,
+  ang0: 3.2 * DEG, ang1: 8 * DEG,
+  poleLen: 1480, ropeX: 650,
 };
 
 /* 步枪（汉阳造式样，侧面，枪托在原点，沿 +x） */
@@ -221,32 +220,30 @@ function buildS56(L) {
   rgrad('g-torch', [[0, '#ffc070', 0.9], [0.3, '#ff9a48', 0.45], [1, '#ff8030', 0]]);
   const foreL = G(march);
   lgrad('g-s6-snow', [[0, '#9cadc4'], [0.4, '#6f809a'], [1, '#2a3446']]);
-  el('path', { d: 'M700,1400L760,1010C900,960 1100,930 1300,915C1500,900 1700,860 1900,850C2100,840 2400,860 2700,880L2700,1400Z', fill: 'url(#g-s6-snow)' }, foreL);
+  el('path', { d: 'M-600,1400L-600,984C-200,980 160,970 400,965C520,963 670,960 800,957C990,947 1140,930 1300,915C1500,900 1700,860 1900,850C2100,840 2400,860 2700,880L2700,1400Z', fill: 'url(#g-s6-snow)' }, foreL);
   el('path', { d: 'M1200,960l40,-34l52,10l30,40ZM1620,905l30,-40l60,6l20,44ZM2050,900l30,-28l40,12l10,30Z', fill: '#1b2230' }, foreL);
   el('path', { d: 'M1200,960l40,-34l52,10M1620,905l30,-40l60,6M2050,900l30,-28l40,12', fill: 'none', stroke: '#dfe8f4', 'stroke-width': 4, opacity: 0.6 }, foreL);
   const fog = el('rect', { x: -800, y: -800, width: 3600, height: 2600, fill: '#dfe7f1', opacity: 0 }, root);
 
-  /* ---------------- 前景：同一副肩头 ---------------- */
-  const carry = G(root);
-  // 筐（挂在扁担梢头）
-  const basket = G(root);
-  const bk = G(basket);
-  el('path', { d: 'M0,0L-150,250M0,0L0,262M0,0L150,250', stroke: '#6b5434', 'stroke-width': 4.5, fill: 'none' }, bk);
-  el('path', { d: 'M0,0L-150,250M0,0L0,262M0,0L150,250', stroke: '#b3a07a', 'stroke-width': 1.2, fill: 'none', 'stroke-dasharray': '3 4', opacity: 0.5 }, bk);
-  lgrad('g-sack', [[0, '#5a4a34'], [0.5, '#3e3222'], [1, '#1c160e']], { x1: 0, y1: 0, x2: 1, y2: 1 });
-  el('path', { d: 'M-150,262C-160,190 -110,150 -40,160C-10,120 60,118 100,160C150,150 176,210 158,262Z', fill: 'url(#g-sack)' }, bk);
-  el('path', { d: 'M-150,262C-160,190 -110,150 -40,160C-10,120 60,118 100,160C150,150 176,210 158,262Z', fill: 'url(#pat-weave)', opacity: 0.8 }, bk);
-  el('path', { d: 'M-40,160C-30,190 -34,230 -30,262M100,160C90,190 96,230 92,262', fill: 'none', stroke: '#241c11', 'stroke-width': 3, opacity: 0.6 }, bk);
-  lgrad('g-basket', [[0, '#141009'], [0.3, '#3a3022'], [0.55, '#524430'], [0.8, '#2c2418'], [1, '#0e0b07']], { x1: 0, y1: 0, x2: 1, y2: 0 });
-  const bodyD = 'M-172,256L172,256L150,560Q0,590 -150,560Z';
-  el('path', { d: bodyD, fill: 'url(#g-basket)' }, bk);
-  el('path', { d: bodyD, fill: 'url(#pat-bamboo)' }, bk);
-  el('path', { d: 'M-150,560Q0,590 150,560', fill: 'none', stroke: '#1d170f', 'stroke-width': 8 }, bk);
-  el('ellipse', { cx: 0, cy: 256, rx: 176, ry: 22, fill: 'none', stroke: '#5c4b31', 'stroke-width': 12 }, bk);
-  el('path', { d: 'M-176,256A176,22 0 0 0 176,256', fill: 'none', stroke: '#a88f63', 'stroke-width': 3, opacity: 0.6 }, bk);
-  el('path', { d: 'M100,330l24,-6l8,22l-22,8Z', fill: '#1a130b' }, bk);
-  softStroke(bk, 'M172,256L150,560', '#e0643a', 6, 0.4);
-  el('path', { d: 'M-150,262C-160,190 -110,150 -40,160C-10,120 60,118 100,160C150,150 176,210 158,262', fill: 'none', stroke: '#c8704a', 'stroke-width': 3, opacity: 0.3 }, bk);
+  /* V5: balanced carrying geometry and featureless cloth silhouettes. */
+  const body=G(root,{id:'v5-carrier'});
+  const carry = G(root, { id: 'b-carry' });
+  // Equal load baskets suspended at symmetric lever arms about the shoulder.
+  const makeBasket=()=>{
+    const g=G(root),bk=G(g,{transform:'scale(.54)'});
+    el('path',{d:'M0,0L-150,512M0,0L150,512',fill:'none',stroke:'#756246','stroke-width':6,'stroke-linecap':'round'},bk);
+    el('path',{d:'M0,0L-150,512M0,0L150,512',fill:'none',stroke:'#b2a17e','stroke-width':1.5,opacity:.55},bk);
+    const sack='M-147,514C-152,452 -117,425 -64,440C-29,389 49,414 74,443C135,423 164,464 154,516Z';
+    el('path',{d:sack,fill:'#625a47'},bk);el('path',{d:sack,fill:'url(#pat-weave)',opacity:.27},bk);
+    el('path',{d:'M-64,440Q-40,472 -48,513M74,443Q52,483 76,514',fill:'none',stroke:'#302d25','stroke-width':5,opacity:.54},bk);
+    const d='M-172,511L172,511L145,808Q0,840 -145,808Z';
+    el('path',{d,fill:'#473c28'},bk);el('path',{d,fill:'url(#pat-bamboo)',opacity:.76},bk);
+    el('ellipse',{cx:0,cy:511,rx:174,ry:22,fill:'none',stroke:'#766344','stroke-width':13},bk);
+    el('path',{d:'M-174,511A174,22 0 0 0 174,511M-145,808Q0,840 145,808',fill:'none',stroke:'#a99166','stroke-width':3,opacity:.63},bk);
+    return g;
+  };
+  const basket=makeBasket(),rearBasket=makeBasket();
+  rearBasket.remove();root.insertBefore(rearBasket,body);
   // 扁担
   const poleG = G(carry);
   lgrad('g-pole', [[0, '#9a7a52'], [0.35, '#6a4c30'], [0.7, '#3f2a17'], [1, '#1e140a']]);
@@ -258,11 +255,12 @@ function buildS56(L) {
   // 步枪
   const rifleG = G(carry);
   const rifle = buildRifle(rifleG);
+  rifle.g.setAttribute('transform','translate(440,0) scale(-1,1)');
   // 形变遮罩
   const mkMask = inv => {
     const id = uid('m');
     const g = lgrad(id + '-g', inv ? [[0, '#000'], [1, '#fff']] : [[0, '#fff'], [1, '#000']], { gradientUnits: 'userSpaceOnUse', x1: 0, y1: 0, x2: 100, y2: 0 });
-    el('rect', { x: -400, y: -400, width: 2400, height: 800, fill: `url(#${id}-g)` }, el('mask', { id, maskUnits: 'userSpaceOnUse', x: -400, y: -400, width: 2400, height: 800 }, DEFS));
+    el('rect', { x: -1200, y: -400, width: 2400, height: 800, fill: `url(#${id}-g)` }, el('mask', { id, maskUnits: 'userSpaceOnUse', x: -1200, y: -400, width: 2400, height: 800 }, DEFS));
     return { id, g };
   };
   const mRifle = mkMask(false), mPole = mkMask(true);
@@ -272,73 +270,111 @@ function buildS56(L) {
   el('path', { d: rifle.outline + polePath(S56.poleLen, 0) }, el('clipPath', { id: cpR }, DEFS));
   const glintG = G(carry, { 'clip-path': `url(#${cpR})` });
   lgrad('g-sweep', [[0, '#fff', 0], [0.5, '#ffe7b0', 0.95], [1, '#fff', 0]], { x1: 0, y1: 0, x2: 1, y2: 0 });
-  const glint = el('rect', { x: 0, y: -80, width: 130, height: 180, fill: 'url(#g-sweep)' }, glintG);
-  // 鞭影
-  const whips = [S56.hit1, S56.hit2].map((at, i) => {
-    const d = i === 0 ? 'M2150,-120C1700,120 1320,300 980,520C760,660 560,760 360,840' : 'M2100,80C1760,260 1500,420 1240,560C1080,650 940,720 820,780';
-    const wg = G(root);
-    const ghost = el('path', { d, fill: 'none', stroke: '#ff8a70', 'stroke-width': 14, opacity: 0, 'stroke-linecap': 'round', transform: 'translate(-40,-26)' }, wg);
-    const glow = el('path', { d, fill: 'none', stroke: '#ffcfb8', 'stroke-width': 26, opacity: 0, 'stroke-linecap': 'round' }, wg);
-    const core = el('path', { d, fill: 'none', stroke: '#fff4ec', 'stroke-width': 4, opacity: 0, 'stroke-linecap': 'round' }, wg);
-    const len = core.getTotalLength();
-    [glow, core, ghost].forEach(p => p.setAttribute('stroke-dasharray', `${len} ${len}`));
-    return { at, glow, core, ghost, len, amp: i ? 0.65 : 1 };
-  });
+  const glint = el('rect', { x: 0, y: -80, width: 48, height: 180, fill: 'url(#g-sweep)' }, glintG);
+  const grip=G(root,{id:'v5-supporting-hand'});
+  const character=buildV5Character({body,grip});
+  // A cropped accusing hand. Direction and repeated jabs carry the scolding, without text.
+  const pointing=G(root,{id:'v2-scolding-gesture'});
+  el('path',{d:'M2300,-112L228,-103L165,-65L165,79L2300,145Z',fill:'#202d36',stroke:'#64727b','stroke-width':3},pointing);
+  el('path',{d:'M218,-87L132,-83L85,-93Q54,-109 17,-95L-34,-55L-260,-64Q-290,-63 -292,-45Q-290,-24 -264,-24L-77,-17L-120,6Q-145,20 -131,39Q-114,57 -83,42L-112,64Q-120,86 -96,92L-39,82L16,69L72,75L159,55L219,55Z',fill:'#1b2a34',stroke:'#7a888e','stroke-width':2},pointing);
+  el('path',{d:'M-78,-17L-18,-17L34,14M-83,42L-13,25M-39,82L19,52',fill:'none',stroke:'#251a13','stroke-width':4},pointing);
+  const whipping=buildV5Whip(root,carry);
+  const surfaceDetails=buildV2SurfaceDetails({poleG,body,rifleG,pastW});
+  const farmerV6=buildV7SourceCharacter(root,{body,carry,grip,basket,rearBasket});
 
   /* ---------------- 每帧 ---------------- */
   const [m0, m1] = S56.morph;
-  const poleState = t => {
-    const k = E.io3(prog(t, m0, m1));
-    let bob = 9 * Math.sin((t * 2 * Math.PI) / 1.05);
-    let jolt = 0;
-    [S56.hit1, S56.hit2].forEach((h, i) => { const dt = t - h; if (dt > 0) jolt += (i ? 16 : 30) * Math.exp(-dt * 4.2) * Math.sin(Math.min(dt * 11, Math.PI * 0.5 + dt * 6)); });
-    const sink = 18 * E.sine(prog(t, 27.0, 28.6));
-    const march = 7 * Math.sin((t * 2 * Math.PI) / 0.95);
-    const px = lerp(S56.pivot0[0], S56.pivot1[0], k);
-    const py = lerp(S56.pivot0[1] + bob + jolt + sink, S56.pivot1[1] + march, k);
-    const ang = lerp(S56.ang0 + 0.004 * Math.sin((t * 2 * Math.PI) / 1.05 + 1) + jolt * 0.0009, S56.ang1 + 0.006 * Math.sin((t * 2 * Math.PI) / 0.95 + 0.6), k);
-    const droop = lerp(52 + 8 * Math.sin((t * 2 * Math.PI) / 1.05 + 0.6) + jolt * 0.8 + sink * 0.8, 0, E.io2(prog(t, m0, m0 + 0.5)));
-    return { px, py, ang, droop, k };
+  // Restrained continuous load bearing; impact is communicated by lash and red pulses.
+  // Every channel remains a pure function of t for identical seeking/reverse export.
+  const pulse = (t, period, phase=0) => {
+    const u = ((t + phase) % period + period) % period / period;
+    return kf(u, [[0,0],[.105,1,E.out3],[.30,1],[.84,0,E.inSine],[1,0]]);
   };
-  S56.poleState = poleState;
+  // Shoulder, head and arms keep their working posture during each impact.
+  // A slow gait is continuous; there is no impulse or recoil displacement channel.
+  function poseAt(t){
+    const k=E.io3(prog(t,m0,m1));
+    const walk=Math.sin((t-24.7)*Math.PI*2/1.9),step=walk*.5+.5;
+    const by=2.2*walk;
+    const cx=lerp(790,805,k),cy=lerp(385,374,k)+by;
+    return {k,h:0,step,walk,cx,cy,hx:cx+lerp(-78,-12,k),hy:cy+290,
+      headX:cx+lerp(107,51,k),headY:cy+lerp(-77,-101,k),headAngle:lerp(23,-3,k),
+      elbowX:cx+lerp(117,88,k),elbowY:cy+lerp(191,182,k),by};
+  }
+  const poleState=t=>{
+    const z=poseAt(t),k=z.k,ang=lerp(S56.ang0,S56.ang1,k);
+    const droop=lerp(42,0,k),scale=lerp(.83,.69,k),contactX=0,contactY=lerp(21,17,k);
+    const px=z.cx+scale*Math.sin(ang)*contactY,py=z.cy-scale*Math.cos(ang)*contactY;
+    return {...z,px,py,ang,droop,scale,contactX,contactY};
+  };
+  S56.poleState=poleState;S56.poseAt=poseAt;
+  const carryMatrix=t=>{const q=poleState(t);return M.chain(M.t(q.px,q.py),M.r(q.ang),M.s(q.scale));};
+  const attachedBasket=(t,side=1)=>{
+    const q=poleState(t),c=Math.cos(q.ang),si=Math.sin(q.ang);let localX=side*S56.ropeX;
+    // Match equal horizontal moment arms, including the beam's curved underside.
+    for(let i=0;i<4;i++){const yy=q.droop*(localX/740)**2;localX-=(c*localX-si*(yy-q.contactY)-side*c*S56.ropeX)/(c-si*2*q.droop*localX/(740*740));}
+    const A=M.ap(carryMatrix(t),localX,q.droop*(localX/740)**2);
+    return {x:A[0],y:A[1],angle:.7*Math.sin((t-24.7)*Math.PI*2/1.9-.6),side};
+  };
+  const release=m0+.16;
+  const basketState=(t,side=1)=>{
+    if(t<=release)return attachedBasket(t,side);
+    const q=attachedBasket(release,side),d=t-release;
+    return {x:q.x+side*20*d,y:q.y+24*d+700*d*d,angle:q.angle+side*10*d,side};
+  };
+  S56.basketState=basketState;
+  const beamPath=(droop,t)=>{
+    const k=E.io3(prog(t,m0,m1)),left=lerp(-740,-890,k),right=lerp(740,440,k),top=[],bot=[];
+    const profile=[[0,-53,63],[14,-56,62],[250,-24,34],[318,-16,26],[470,-27,17],[1010,-27,16],[1024,-27,-12],[1330,-27,-12]];
+    const at=x=>{for(let j=1;j<profile.length;j++){if(x<=profile[j][0]){const a=profile[j-1],b=profile[j],u=(x-a[0])/(b[0]-a[0]);return[lerp(a[1],b[1],u),lerp(a[2],b[2],u)];}}return[-27,-12];};
+    for(let i=0;i<=96;i++){const u=i/96,x=lerp(left,right,u),yc=droop*(2*u-1)**2,w=21-7*Math.abs(2*u-1),p=at(1330*(1-u));top.push([x,lerp(yc-w,p[0],k)]);bot.push([x,lerp(yc+w,p[1],k)]);}
+    return poly(top)+'L'+bot.reverse().map(p=>r1(p[0])+','+r1(p[1])).join('L')+'Z';
+  };
+  S56.beamPath=beamPath;
+  S56.geometryAt=t=>{const q=poleState(t),m=carryMatrix(t),a=attachedBasket(t,-1),b=attachedBasket(t,1);return {shoulder:[q.cx,q.cy],propSupport:M.ap(m,0,q.contactY),ropeAnchors:[[a.x,a.y],[b.x,b.y]],rifleMuzzle:M.ap(m,-890,-27),rifleSight:M.ap(m,-881,-38),rifleButtUpper:M.ap(m,440,-54),rifleButtLower:M.ap(m,440,64),beamEnds:[M.ap(m,-740,q.droop),M.ap(m,740,q.droop)],head:[q.headX,q.headY],elbow:[q.elbowX,q.elbowY],backTarget:[q.cx-111,q.cy+103]};};
 
-  const camK = [[22.7, [960, 540, 1.0, 0]], [24.7, [960, 540, 1.0, 0], 'stop'], [28.85, [905, 520, 1.075, 0]], [29.95, [960, 540, 1.0, 0], 'stop'], [35.6, [1010, 530, 1.05, 0]]];
+  const camK = [[22.7,[960,540,1,0]],[24.7,[960,540,1,0],'stop'],[28.85,[949,552,1.035,0],'stop'],[29.95,[960,540,1,0],'stop'],[35.6,[988,540,1.025,0]]];
   S56.camAt = t => { const c = camSpl(t, camK); return cam(c[0], c[1], c[2], c[3]); };
   s.update = t => {
     root.setAttribute('transform', M.str(S56.camAt(t)));
     // 墨色显影阶段（S4 的墨团作遮罩）
     L.s56.setAttribute('mask', t < 24.5 ? `url(#${S4.inkMaskId})` : 'none');
     const ps = poleState(t);
-    const mt = M.chain(M.t(ps.px, ps.py), M.r(ps.ang));
-    carry.setAttribute('transform', M.str(mt));
-    pole.setAttribute('d', polePath(S56.poleLen, ps.droop));
-    poleTex.setAttribute('d', polePath(S56.poleLen, ps.droop));
-    poleRim.setAttribute('d', polePath(S56.poleLen, ps.droop));
-    const ry = ps.droop * (S56.ropeX / S56.poleLen) ** 2;
-    set(peg, { x: S56.poleLen - 24, y: ps.droop - 32 });
+    const mt = carryMatrix(t);
+    carry.setAttribute('transform',M.str(mt));
+    character.update(ps,mt,t);
+    // Scolding: entry, two pointing jabs, then the arm changes to the blow action.
+    const pointA=env(t,24.50,24.70,28.28,28.48),jab=pulse(t-24.85,1.35,0);
+    pointing.setAttribute('transform',`translate(${r1(1310+700*(1-pointA)-18*jab)},${r1(228+5*jab)}) rotate(-9) scale(.60)`);vis(pointing,pointA);
+    whipping.update(t,ps);
+    const bd=beamPath(ps.droop,t);
+    pole.setAttribute('d', bd);
+    poleTex.setAttribute('d', bd);
+    poleRim.setAttribute('d', bd);
+    surfaceDetails.update({t,ps,beamD:bd});
+    const ry = ps.droop * (S56.ropeX / (S56.poleLen/2)) ** 2;
+    set(peg, { x: S56.ropeX+5, y: ry - 25 });
     set(loop, { cx: S56.ropeX, cy: r1(ry) });
+    vis(peg,1-E.sine(prog(t,release,release+.15)));
+    vis(loop,1-E.sine(prog(t,release,release+.15))); // rope fittings leave with the load
     // 形变：光从肩头掠向梢头
     const sw = E.io2(prog(t, S56.sweep[0], S56.sweep[1]));
-    const sx = lerp(-160, 1520, sw);
-    set(mRifle.g, { x1: r1(sx - 60), x2: r1(sx + 60) });
-    set(mPole.g, { x1: r1(sx - 60), x2: r1(sx + 60) });
+    const sx = lerp(-1050, 840, sw);
+    set(mRifle.g, { x1: r1(sx - 28), x2: r1(sx + 28) });
+    set(mPole.g, { x1: r1(sx - 28), x2: r1(sx + 28) });
     vis(rifleG, t > S56.sweep[0] - 0.02 ? 1 : 0);
     vis(poleG, t < S56.sweep[1] + 0.02 ? 1 : 0);
-    glint.setAttribute('x', r1(sx - 65));
-    vis(glintG, Math.sin(Math.PI * clamp(sw)) * 0.9);
-    // 筐：随扁担晃，形变时滑落
-    const A = M.ap(mt, S56.ropeX, ry);
-    const dropT = Math.max(0, t - (m0 + 0.02));
-    const swing = 2.6 * Math.sin((t * 2 * Math.PI) / 1.05 - 0.9) + [S56.hit1, S56.hit2].reduce((a, h) => a + (t > h ? 7 * Math.exp(-(t - h) * 2.2) * Math.sin((t - h) * 7) : 0), 0);
-    basket.setAttribute('transform', `translate(${r1(A[0] + dropT * 60)},${r1(A[1] + 1600 * dropT * dropT)}) rotate(${r1(swing + dropT * 40)})`);
-    vis(basket, t < m0 + 0.75 ? 1 : 0);
+    glint.setAttribute('x', r1(sx - 24));
+    vis(glintG,0);
+    // An actual release: the basket retains its own velocity and gravity.
+    [basket,rearBasket].forEach((node,i)=>{const bs=basketState(t,i?-1:1);node.setAttribute('transform',`translate(${r1(bs.x)},${r1(bs.y)}) rotate(${r1(bs.angle)})`);vis(node,t<release+.96?1:0);});
     // 背景切换
     const bx = E.io3(prog(t, m0 + 0.05, m1 + 0.2));
-    pastW.setAttribute('transform', `translate(${r1(-40 + (t - 24.7) * 16)},${r1(bx * 420)})`);
+    pastW.setAttribute('transform', `translate(${r1(-40 + (t - 24.7) * 16)},${r1(bx * 78)})`);
     vis(past, 1 - E.sine(prog(t, m0 + 0.1, m1)));
     vis(march, E.sine(prog(t, m0 + 0.15, m1 + 0.25)));
     const pan = t - T.NOW;
-    march.setAttribute('transform', `translate(0,${r1((1 - bx) * -380)})`);
+    march.setAttribute('transform', `translate(0,${r1((1 - bx) * -64)})`);
     farL.setAttribute('transform', `translate(${r1(-pan * 4)},0)`);
     midL.setAttribute('transform', `translate(${r1(-pan * 12)},0)`);
     foreL.setAttribute('transform', `translate(${r1(-pan * 38)},0)`);
@@ -358,55 +394,21 @@ function buildS56(L) {
       vis(tc.g, (0.75 + 0.25 * flick(t, tc.seed)) * clamp(u * 12) * clamp((1 - u) * 20));
     });
     fl.forEach(f => { const k = (t - f.at) / 0.55; f.e.setAttribute('opacity', (k > 0 && k < 1 ? Math.sin(Math.PI * k) ** 0.6 * (0.9 - 0.4 * k) : 0).toFixed(3)); });
-    // 鞭影
-    POST.shake = [0, 0];
-    whips.forEach(w => {
-      const dt = t - w.at;
-      const draw = clamp(dt / 0.09), fade = dt < 0 ? 0 : Math.exp(-Math.max(0, dt - 0.09) * 7);
-      [w.glow, w.core, w.ghost].forEach(p => p.setAttribute('stroke-dashoffset', (w.len * (1 - draw)).toFixed(1)));
-      w.ghost.setAttribute('opacity', (dt > 0 ? 0.28 * Math.exp(-Math.max(0, dt - 0.05) * 9) * w.amp : 0).toFixed(3));
-      w.core.setAttribute('opacity', (dt > 0 ? fade * w.amp : 0).toFixed(3));
-      w.glow.setAttribute('opacity', (dt > 0 ? 0.3 * fade * w.amp : 0).toFixed(3));
-      if (dt > 0 && dt < 0.5) {
-        const a = 16 * w.amp * Math.exp(-dt * 9);
-        POST.shake[0] += a * Math.sin(dt * 95);
-        POST.shake[1] += a * Math.cos(dt * 83);
-        POST.flash = Math.max(POST.flash, 0.22 * w.amp * Math.exp(-dt * 14));
-        POST.flashColor = '#ffe6dc';
-      }
-    });
+    POST.shake=[0,0];
+    const redPulse=[S56.hit1,S56.hit2].reduce((a,h)=>{const d=t-h;return a+(d>=0&&d<.24?.16*Math.sin(Math.PI*d/.24):0);},0);
+    POST.flash=redPulse;POST.flashColor='#761a20';
     // 风雪白茫茫 → S7
     rifle.frost.setAttribute('opacity', (0.85 * E.sine(prog(t, 32.6, 35.0))).toFixed(3));
     const wo = env(t, 34.55, 35.15, 35.2, 35.6);
     fog.setAttribute('opacity', (0.93 * wo).toFixed(3));
+    farmerV6.update(t);
     vis(root, 1);
   };
   const rain = seeds(420, 101, R => ({ x: R() * 2400 - 240, y: R() * 1300, v: 1500 + R() * 900, l: 26 + R() * 46, a: 0.12 + R() * 0.3, w: 0.8 + R() * 1.4 }));
   const snow = seeds(520, 103, R => ({ x: R() * 2400 - 240, y: R() * 1300, v: 90 + R() * 160, r: 0.8 + R() * 3.2, ph: R() * 6.28, a: 0.35 + R() * 0.6, z: R() }));
-  const grains = seeds(240, 105, (R, i) => ({ at: 27.0 + i * 0.0068, vx: 30 + R() * 110, vy: -40 + R() * 70, r: 2.2 + R() * 1.8 }));
   s.fx = (ctx, t) => {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     const shk = POST.shake;
-    // 撒落的粮食
-    if (t > 26.95 && t < S56.morph[0] + 0.6) {
-      const ps = poleState(t);
-      const mt = M.chain(M.t(ps.px, ps.py), M.r(ps.ang));
-      const A = M.ap(mt, S56.ropeX, ps.droop * (S56.ropeX / S56.poleLen) ** 2);
-      const hole = [A[0] + 118, A[1] + 336];
-      const cm = S56.camAt(t);
-      ctx.setTransform(cm[0], cm[1], cm[2], cm[3], cm[4], cm[5]);
-      ctx.fillStyle = 'rgba(236,196,110,0.95)';
-      for (const g of grains) {
-        const dt = t - g.at;
-        if (dt < 0 || dt > 1.1) continue;
-        const x = hole[0] + g.vx * dt, y = hole[1] + g.vy * dt + 1400 * dt * dt;
-        if (y > 1060) continue;
-        ctx.globalAlpha = clamp(1.2 - dt);
-        ctx.beginPath(); ctx.ellipse(x, y, g.r, g.r * 0.75, dt * 5, 0, 6.283); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-    }
     // 雨 → 雪
     const rainA = env(t, 23.2, 24.6, S56.morph[0] + 0.1, S56.morph[0] + 0.55);
     if (rainA > 0) {

@@ -1,0 +1,4 @@
+'use strict';
+const fs=require('fs'),path=require('path'),{makeScene,render}=require('./软件渲染.cjs');
+const args=Object.fromEntries(process.argv.slice(2).map(x=>x.split('=')));
+(async()=>{const source=path.resolve(args.source),out=path.resolve(args.out),start=+(args.start||24.7),end=+(args.end||28.85),fps=+(args.fps||60),width=+(args.width||1280),part=+(args.part||0),parts=+(args.parts||1);fs.mkdirSync(out,{recursive:true});const scene=await makeScene(source);let count=0;for(let i=part;i<Math.round((end-start)*fps);i+=parts){const t=start+i/fps;if(args.onlyFrom&&t<+args.onlyFrom)continue;if(args.onlyTo&&t>+args.onlyTo)continue;const file=path.join(out,`f${String(i).padStart(5,'0')}.png`);if(args.resume==='1'&&fs.existsSync(file))continue;await render(scene,t,file,width);count++;if(count%30===0)console.log(part,count,'frames');}console.log('DONE',part,count);})().catch(e=>{console.error(e);process.exit(1)});

@@ -196,8 +196,8 @@
 
   /* ---------- 对外接口（逐帧导出用） ---------- */
   const ready = texReady.then(() => {
-    const imgs = Array.from(document.querySelectorAll('image')).map(i => i.getAttribute('href') || '').filter(h => h && !h.startsWith('data:'));
-    return Promise.all([...new Set(imgs)].map(h => new Promise(res => { const im = new Image(); im.onload = im.onerror = () => res(); im.src = h; })));
+    const imgs = Array.from(document.querySelectorAll('image')).map(i => i.getAttribute('href') || '').filter(h => h);
+    return Promise.all([...new Set(imgs)].map(h => new Promise((res,rej) => { const im = new Image(); im.onload = () => res(); im.onerror = () => rej(new Error('Image failed to load')); im.src = h; })));
   }).then(() => (window.BURN_READY || Promise.resolve())).then(() => { renderAt(lastT < 0 ? 0 : lastT); });
   window.__anim = { duration: DURATION, renderAt, play, pause, seek, ready, anchors: { design: DESIGN, actual: ACTUAL } };
 
