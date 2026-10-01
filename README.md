@@ -18,7 +18,9 @@
 | [assets/](assets/) | 多个作品共用的图片、音频、字体等素材。 |
 | [downloads/](downloads/) | 可直接分享的零散文件、文档和小工具。 |
 
-初始仓库只有目录和使用说明，作品可以逐步添加。
+## 已有作品
+
+- [保安·李长林](animations/baoan-li-changlin/)：60.505 秒 HTML 动画，包含播放页面、素材配置和逐帧视频导出工具。下载整个项目并解压后，打开 `animations/baoan-li-changlin/index.html`。作品目前无音频、无字幕，详见[作品说明](animations/baoan-li-changlin/README.md)。
 
 ## 如何一起制作
 

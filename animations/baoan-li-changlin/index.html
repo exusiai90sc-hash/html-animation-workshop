@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>保安·李长林</title>
+<link rel="icon" href="data:,">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #wrap { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; width: 1920px; height: 1080px; flex: none; overflow: hidden; background: #0a0705; transform-origin: 50% 50%; }
+  #stage > * { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; }
+  #world { display: block; will-change: transform; }
+  #grade { mix-blend-mode: soft-light; }
+  #grain { mix-blend-mode: overlay; opacity: .3; }
+  #vig { background: radial-gradient(ellipse 72% 68% at 50% 48%, rgba(0,0,0,0) 52%, rgba(0,0,0,.34) 82%, rgba(0,0,0,.62) 100%); }
+  #flash { background: #fff; opacity: 0; }
+  #ui { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); display: flex; gap: 10px; align-items: center;
+        padding: 8px 14px; border-radius: 12px; background: rgba(12,10,8,.72); color: #e9dcc4; font: 13px/1 system-ui, sans-serif;
+        backdrop-filter: blur(6px); transition: opacity .4s; user-select: none; }
+  #ui.idle, #ui.hidden { opacity: 0; pointer-events: none; }
+  #ui button { white-space: nowrap; background: none; border: 1px solid rgba(233,220,196,.35); color: inherit; border-radius: 8px; padding: 6px 10px; cursor: pointer; font: inherit; min-width: 38px; }
+  #ui button:hover { background: rgba(233,220,196,.12); }
+  #bar { width: min(46vw, 560px); accent-color: #c9452f; }
+  #time { font-variant-numeric: tabular-nums; min-width: 118px; text-align: right; opacity: .85; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <svg id="world" viewBox="0 0 1920 1080" width="1920" height="1080" xmlns="http://www.w3.org/2000/svg"><defs id="defs"></defs></svg>
+    <canvas id="fx" width="1920" height="1080"></canvas>
+    <div id="grade"></div>
+    <canvas id="grain" width="960" height="540"></canvas>
+    <div id="flash"></div>
+    <div id="vig"></div>
+    <div id="guides" style="display:none"></div>
+  </div>
+</div>
+<div id="ui">
+  <button id="play" title="播放 / 暂停（空格）">▶</button>
+  <button id="restart" title="从头播放">⟲</button>
+  <input id="bar" type="range" min="0" max="1000" value="0" title="拖动定位（← → 键逐秒，Shift 逐帧）">
+  <span id="time">00.00 / 60.505</span>
+  <button id="guidesBtn" title="显示素材位参考框（G）">素材位</button>
+  <button id="fs" title="全屏（F）">⛶</button>
+</div>
+<script src="materials.js"></script>
+<script src="js/core.js"></script>
+<script src="js/objects.js"></script>
+<script src="js/scenes1.js"></script>
+<script src="js/scenes2.js"></script>
+<script src="js/scenes3.js"></script>
+<script src="js/scenes4.js"></script>
+<script src="js/scenes5.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
