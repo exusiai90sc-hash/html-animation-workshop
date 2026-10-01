@@ -398,34 +398,12 @@ function buildS4(L) {
   const cm = buildCamera(world, S4.camObj);
   // 笔记本
   const nb = buildNotebook(world, S4.nb);
-  // 斯诺照片素材位（回形针别在左页）
-  const ph = { x: -250, y: -40, w: 190, h: 244, rot: 5 };
-  const phM = M.chain(nb.m, M.t(ph.x, ph.y), M.r(ph.rot * DEG));
-  if (MATERIALS.snow) {
-    const pg = G(world, { transform: M.str(phM) });
-    softRect(pg, -ph.w / 2 - 2, -ph.h / 2, ph.w + 24, ph.h + 24, 0.5);
-    el('rect', { x: -ph.w / 2 - 12, y: -ph.h / 2 - 12, width: ph.w + 24, height: ph.h + 24, fill: '#eee2c8' }, pg);
-    el('rect', { x: -ph.w / 2 - 12, y: -ph.h / 2 - 12, width: ph.w + 24, height: ph.h + 24, fill: 'url(#pat-paper)', opacity: 0.7 }, pg);
-    const cp = uid('cp');
-    el('rect', { x: -ph.w / 2, y: -ph.h / 2, width: ph.w, height: ph.h }, el('clipPath', { id: cp }, DEFS));
-    const pic = G(pg, { 'clip-path': `url(#${cp})`, style: 'isolation:isolate' });
-    el('image', { href: MATERIALS.snow, x: -ph.w / 2, y: -ph.h / 2, width: ph.w, height: ph.h, preserveAspectRatio: 'xMidYMid slice', style: 'filter:grayscale(1) contrast(1.05)' }, pic);
-    el('rect', { x: -ph.w / 2, y: -ph.h / 2, width: ph.w, height: ph.h, fill: '#8a6236', style: 'mix-blend-mode:color', opacity: 0.5 }, pic);
-    el('rect', { x: -ph.w / 2, y: -ph.h / 2, width: ph.w, height: ph.h, fill: 'url(#g-s1-picvig)' }, pic);
-    el('rect', { x: -ph.w / 2, y: -ph.h / 2, width: ph.w, height: ph.h, fill: 'url(#pat-grit)', opacity: 0.35 }, pic);
-    el('path', { d: `M-18,${-ph.h / 2 - 34}v58a9,9 0 0 0 18,0v-50a6,6 0 0 0 -12,0v44`, fill: 'none', stroke: '#b9bcc0', 'stroke-width': 3.2, 'stroke-linecap': 'round' }, pg);
-  }
-  // 新写下的句子（右页）
-  const lines = [];
-  const R = rng(19);
-  [[-169, 300], [-135, 292], [-101, 310], [-67, 180]].forEach(([y, w]) => {
-    const p = el('path', { d: cursivePath(58, y, w, R, 11) }, nb.pageR);
-    const len = p.getTotalLength();
-    p.setAttribute('stroke-dasharray', `${len.toFixed(1)} ${len.toFixed(1)}`);
-    p.setAttribute('stroke-dashoffset', len.toFixed(1));
-    lines.push({ p, len });
-  });
-  const total = lines.reduce((a, b) => a + b.len, 0);
+  // 可读的采访提纲与独立年代标注的资料照。
+  const interview = buildInterviewPaper(nb, world);
+  const lines = interview.lines;
+  const total = interview.total;
+  const ph = { x: 800, y: 860, w: 190, h: 244, rot: -3 };
+  const phM = M.chain(M.t(ph.x, ph.y), M.r(ph.rot * DEG));
   const pen = buildPen(world);
   const drop = el('circle', { r: 0, fill: '#0b0e16' }, world);
   const dropHi = el('circle', { r: 0, fill: '#8ea4c8', opacity: 0.6 }, world);
@@ -454,20 +432,16 @@ function buildS4(L) {
   const W1 = [17.35, 20.85];
   const penAt = t => {
     const p = E.sine(prog(t, W1[0], W1[1])) * total;
-    let acc = 0;
-    for (const ln of lines) {
-      if (p <= acc + ln.len || ln === lines[lines.length - 1]) {
-        const q = ln.p.getPointAtLength(clamp(p - acc, 0, ln.len));
-        return M.ap(nb.m, q.x, q.y);
-      }
-      acc += ln.len;
-    }
+    const q = interview.pointAt(p);
+    // 写完后退到空白页缘，正文留下完整的阅读停顿。
+    const park = E.sine(prog(t, W1[1], 21.35));
+    return M.ap(nb.m, q[0] + 95 * park, q[1] + 75 * park);
   };
-  const nibRest = penAt(W1[1]);
+  const nibRest = penAt(21.35);
   S4.dropPt = [nibRest[0] + 6, nibRest[1] + 40];
 
   s.slots = [{
-    key: 'snow', label: '人像位 · 斯诺（可选）', active: t => t > 15.6 && t < 22.4,
+    key: 'snow', label: '斯诺资料照 · 1938（动画整理）', active: t => t > 15.6 && t < 22.4,
     quad: t => { const m = M.mul(S4.camAt(t), phM); return [[-ph.w / 2, -ph.h / 2], [ph.w / 2, -ph.h / 2], [ph.w / 2, ph.h / 2], [-ph.w / 2, ph.h / 2]].map(p => M.ap(m, p[0], p[1])); },
   }];
 
@@ -478,14 +452,9 @@ function buildS4(L) {
     flame.update(t, lamp.tip[0], lamp.tip[1] + 3, 0.95, 1, 0, 11);
     // 书写
     const p = E.sine(prog(t, W1[0], W1[1])) * total;
-    let acc = 0;
-    for (const ln of lines) {
-      const k = clamp(p - acc, 0, ln.len);
-      ln.p.setAttribute('stroke-dashoffset', (ln.len - k).toFixed(1));
-      acc += ln.len;
-    }
+    interview.revealAt(p);
     const tip = penAt(t);
-    const lift = 16 * E.sine(prog(t, 20.9, 21.5)) + 20 * (1 - E.sine(prog(t, 16.2, 17.35)));
+    const lift = 16 * E.sine(prog(t, 20.9, 21.5)) + 20 * (1 - E.sine(prog(t, 16.2, 17.35))) + interview.penLiftAt(p);
     const wob = t > W1[0] && t < W1[1] ? 3 * Math.sin(t * 38) : 0;
     pen.g.setAttribute('transform', `translate(${r1(tip[0])},${r1(tip[1] - lift + wob)})`);
     pen.shadow.setAttribute('transform', `translate(${r1(18 + lift * 1.4)},${r1(22 + lift * 1.6)})`);
@@ -507,7 +476,9 @@ function buildS4(L) {
     const bk = prog(t, 22.75, 24.45);
     if (bk > 0) {
       const c = M.ap(m, S4.dropPt[0], S4.dropPt[1]);
-      const Rr = 20 + 1850 * E.in2(bk);
+      // 落点随抬笔进入空白处；以视口最远角确定末端覆盖半径。
+      const farCorner = Math.hypot(Math.max(c[0], 1920-c[0]), Math.max(c[1], 1080-c[1]));
+      const Rr = 20 + Math.max(1850, (farCorner + 130) / .9) * E.in2(bk);
       const d = blobPath(c[0], c[1], Rr, 9, t * 0.6, 140, 1.6);
       ink.setAttribute('d', d);
       inkRim.setAttribute('d', d);

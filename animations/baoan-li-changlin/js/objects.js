@@ -495,7 +495,7 @@ function buildNotebook(parent, o) {
     el('path', { d: cursivePath(-338, y, i === 11 ? 170 : 300 + R() * 30, R, 10) }, old);
   }
   const pageR = G(g0, { fill: 'none', stroke: '#141b2c', 'stroke-width': 2.1, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
-  return { g: g0, m, pageR, R };
+  return { g: g0, m, pageR, old, R };
 }
 
 /* ---------- 钢笔（笔尖在原点） ---------- */

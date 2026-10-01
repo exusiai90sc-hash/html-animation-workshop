@@ -52,7 +52,7 @@ function buildV7SourceCharacter(root,legacy){
     return {k,pose,world,shoulderBob,torsoAngle,yokeAngle,brace,shoulder:map(base,sn),elbow:map(base,en),grip:map(base,gn),contact:map(base,cn),target,backTangent,loadAnchors,headAngle:torsoAngle+.8+.40*Math.sin(phase-.7)+.40*brace-10.0*k};
   }
   function update(t){
-    const active=t>=24.7&&t<=35.2;vis(rig,active?1:0);
+    const active=t>=22.7&&t<=35.2;vis(rig,active?1:0);
     if(!active){vis(legacy.body,1);vis(legacy.carry,1);vis(legacy.grip,1);return;}
     [legacy.body,legacy.carry,legacy.grip,legacy.basket,legacy.rearBasket].forEach(e=>vis(e,0));
     document.querySelectorAll('#v5-continuous-whip').forEach(e=>vis(e,0));document.querySelectorAll('#v5-whip-arm').forEach(e=>vis(e,0));
