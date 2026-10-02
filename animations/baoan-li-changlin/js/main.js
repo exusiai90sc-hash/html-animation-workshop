@@ -87,7 +87,7 @@
     flashEl.style.background = POST.flashColor;
     flashEl.style.opacity = clamp(POST.flash).toFixed(3);
     vigEl.style.opacity = clamp(POST.vig * (1 + 0.06 * noise1(t * 11)), 0, 1.5).toFixed(3);
-    const wob = [0.6 * noise1(t * 24 + 3), 0.5 * noise1(t * 24 + 9)];
+    const wob = [0, 0];
     svg.style.transform = `translate(${(POST.shake[0] + wob[0]).toFixed(2)}px,${(POST.shake[1] + wob[1]).toFixed(2)}px)`;
     // 胶片颗粒（每秒 24 次换帧）
     const gi = Math.floor(t * 24);

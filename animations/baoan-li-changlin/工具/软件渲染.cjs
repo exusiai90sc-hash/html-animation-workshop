@@ -6,11 +6,11 @@ const loader=require('./场景适配.cjs');
 const lookup=(collection,id)=>collection instanceof Map?collection.get(id):collection?.[id];
 const element=(scene,id)=>lookup(scene.ids,id)||scene.ctx.document.getElementById(id);
 const canvas=(scene,id)=>{const c=lookup(scene.canvases,id),e=element(scene,id);return c||e?._canvas||e?.canvas||e;};
-async function render(scene,t,file,width=1280,saveSVG=false){
+async function render(scene,t,file,width=1280,saveSVG=false,options={}){
  scene.ctx.__anim.renderAt(t);
  const world=scene.svg||element(scene,'world'),transform=world.style.transform||'',shift=/translate\(\s*([-\d.]+)px\s*,\s*([-\d.]+)px\s*\)/.exec(transform);
  world.style.transform='';
- let svg;try{svg=scene.serialize?scene.serialize(world,{pruneHidden:true}):loader.serialize?loader.serialize(world,{pruneHidden:true}):world.outerHTML;}finally{world.style.transform=transform;}
+ let svg;try{svg=scene.serialize?scene.serialize(world,{pruneHidden:true,shareTextureImages:options.shareTextureImages!==false}):loader.serialize?loader.serialize(world,{pruneHidden:true,shareTextureImages:options.shareTextureImages!==false}):world.outerHTML;}finally{world.style.transform=transform;}
  if(!svg?.startsWith('<svg'))throw Error('Loader did not serialize an SVG root');
  const height=Math.round(width*1080/1920),scale=width/1920,out=createCanvas(width,height),ctx=out.getContext('2d');
  ctx.fillStyle='#0a0705';ctx.fillRect(0,0,width,height);

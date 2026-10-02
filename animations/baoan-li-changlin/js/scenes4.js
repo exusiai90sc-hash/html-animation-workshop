@@ -47,7 +47,7 @@ const ridgeY = (pts, x) => {
 };
 
 function buildS8(L) {
-  const s = addScene({ name: 'S8', t0: 38.55, t1: 53.62, roots: [L.s8, L.flame] });
+  const s = addScene({ name: 'S8', t0: 38.55, t1: 53.7, roots: [L.s8, L.flame] });
   const root = G(L.s8);
   const layers = {};
   const mk = (name, f) => { layers[name] = { g: G(root), f }; return layers[name].g; };
@@ -94,32 +94,37 @@ function buildS8(L) {
   /* 窑洞（窗在夜里依次亮起） */
   rgrad('g-win-glow', [[0, '#ffd694', 0.75], [0.3, '#ffb05a', 0.28], [1, '#ff9a40', 0]]);
   const origin = [1250, 760];
+  const drawCave = buildVillageWindowMaterials();
   const caves = [];
   const addCaves = (name, xs, depthRows, sc, tBase) => {
     const g0 = layers[name].g, pts = ridges[name];
     for (const [xa, xb] of xs) {
       depthRows.forEach((dy, row) => {
-        for (let x = xa + row * 18; x < xb; x += 62 * sc) {
-          const y = Math.max(ridgeY(pts, x), ridgeY(pts, x + 44 * sc)) + dy * sc;
-          if (hash1(Math.round(x) * 3 + row * 17) < 0.14) continue;
-          const cg = G(g0, { transform: `translate(${r1(x)},${r1(y)}) scale(${sc})` });
-          el('path', { d: 'M-27,0V-32A27,27 0 0 1 27,-32V0Z', fill: mixHex('#141a31', '#3a4468', 0.35) }, cg);
-          el('path', { d: 'M-27,-32A27,27 0 0 1 27,-32', fill: 'none', stroke: '#4a557c', 'stroke-width': 2.5, opacity: 0.7 }, cg);
-          el('rect', { x: -21, y: -24, width: 13, height: 24, fill: '#080a14' }, cg);
-          const dark = el('path', { d: 'M-21,-32A21,21 0 0 1 21,-32ZM-4,-28H21V-8H-4Z', fill: '#0c1020' }, cg);
-          const lit = G(cg, { opacity: 0 });
-          el('circle', { cx: 4, cy: -30, r: 58, fill: 'url(#g-win-glow)' }, lit);
-          el('path', { d: 'M-21,-32A21,21 0 0 1 21,-32ZM-4,-28H21V-8H-4Z', fill: '#ffc873' }, lit);
-          el('path', { d: 'M0,-32L0,-53M0,-32L-14,-47M0,-32L14,-47M-12,-32A12,12 0 0 1 12,-32M4,-28V-8M12,-28V-8M-4,-18H21', fill: 'none', stroke: '#7a4420', 'stroke-width': 1.5, opacity: 0.85 }, lit);
-          const dist = Math.hypot((x - origin[0]) * (name === 'mid' ? 1 : 1.6), y - origin[1]);
-          caves.push({ lit, at: tBase + dist / 900 * 1.6 + hash1(caves.length * 13) * 0.5, seed: caves.length, x, y, layer: name });
+        const homes=[];
+        for(let x=xa+row*18;x<xb;x+=sc*(58+hash1(Math.round(x)*3+row*17)*18)){
+          if(hash1(Math.round(x)*3+row*17)<.10)continue;
+          const y=Math.max(ridgeY(pts,x),ridgeY(pts,x+44*sc))+dy*sc;
+          const n=homes.length;
+          homes.push({x:x+(hash1(n*29+Math.round(xa))-.5)*7*sc,y:y+(hash1(n*13+row*37)-.5)*5*sc});
         }
+        if(name!=='mfar'){
+          for(let j=0;j<homes.length;j+=3)buildVillageFacade(g0,homes.slice(j,j+3),sc,(j/3+row+Math.floor(xa/100))%3);
+        }
+        homes.forEach((p,j)=>{
+          const index=caves.length;
+          const sx=.88+.17*hash1(index*17+10),sy=.91+.12*hash1(index*23+31);
+          const cg=G(g0,{transform:`translate(${r1(p.x)},${r1(p.y)}) scale(${r1(sc*sx)},${r1(sc*sy)})`});
+          const material=drawCave(cg,index),lit=material.lit;
+          const dist=Math.hypot((p.x-origin[0])*(name==='mid'?1:1.6),p.y-origin[1]);
+          caves.push({lit,at:tBase+dist/900*1.6+hash1(index*13)*.5,seed:index,x:p.x,y:p.y,layer:name,variant:material.variant,brightness:material.brightness});
+        });
       });
     }
   };
   addCaves('mfar', [[700, 1150], [1500, 1900], [2600, 2900]], [70, 130], 0.62, 40.0);
   addCaves('mid', [[830, 1230], [1330, 1760], [2300, 2680], [3150, 3420], [3950, 4150]], [64, 132], 1, 39.85);
   addCaves('near', [[380, 700], [1850, 2150], [3300, 3500]], [70], 1.3, 40.6);
+  window.__villageWindows=caves.map(({at,seed,x,y,layer,variant,brightness})=>({at,seed,x,y,layer,variant,brightness}));
   /* 出路：火苗走过的山路 */
   const roadG = layers.mid.road;
   const roadGlow2 = el('path', { d: PL.road.d, fill: 'none', stroke: '#ffb35c', 'stroke-width': 46, opacity: 0.08, 'stroke-linecap': 'round' }, roadG);
@@ -153,6 +158,7 @@ function buildS8(L) {
   /* ---------- 借据燃烧（画布） ---------- */
   const BW = 250, BH = 175;
   const burn = new Float32Array(BW * BH);
+  const burnHeat = new Float32Array(BW * BH);
   {
     const nz = tileFbm(256, 77, [[4, 0.5], [8, 0.3], [24, 0.2]]);
     const ig = [BW * 0.46, BH * 1.02];
@@ -161,6 +167,9 @@ function buildS8(L) {
       const d = Math.hypot((x - ig[0]) * 0.85, y - ig[1]);
       const v = d / 220 * 0.78 + nz[(y % 256) * 256 + (x % 256)] * 0.42;
       burn[y * BW + x] = v;
+      // Reuse the existing paper's burn field for local hot/cooled regions;
+      // no new random stream or change to the disappearance mask.
+      burnHeat[y * BW + x] = .25+.75*smoothstep(.38,.70,nz[(y % 256) * 256 + (x % 256)]);
       if (v > mx) mx = v;
     }
     let mn = Infinity;
@@ -179,7 +188,7 @@ function buildS8(L) {
   }
   const BT = [39.5, 42.95];
   const th = t => -0.03 + 1.12 * E.in2(prog(t, BT[0], BT[1]));
-  const paperM = t => M.chain(M.t(960, 565), M.r(-3 * DEG), M.s(lerp(1.2, 1.12, E.sine(prog(t, 38.6, 43)))), M.t(-500, -350));
+  const paperM = t => M.chain(M.t(960, 565), M.r(-3 * DEG), M.s(lerp(1.2, 1.12, E.sine(prog(t, 38.6, 43)))), M.s(0.56, 1), M.t(-500, -350));
   const embers = seeds(360, 141, R => {
     const x = R() * 1000, y = R() * 700, v = burn[Math.floor(y / 4) * BW + Math.floor(x / 4)];
     const p = Math.sqrt(clamp((v + 0.03) / 1.12));
@@ -195,12 +204,14 @@ function buildS8(L) {
   }];
   /* ---------- 每帧 ---------- */
   s.update = t => {
+    // S7 按原时刻退场后，由借据镜头接完同一道红星闪光，至 39.4 秒归零。
+    if (t > 39.05 && t < T.WHOM + 0.8) { POST.flash = Math.max(POST.flash, 0.95 * Math.sin(Math.PI * clamp((t - T.WHOM + 0.1) / 0.9)) ** 1.5); POST.flashColor = '#fff1d6'; }
     for (const k in layers) layers[k].g.setAttribute('transform', M.str(PL.layerM(t, layers[k].f)));
     stars.forEach((st, i) => { if (i % 3 === 0) st.e.setAttribute('opacity', (0.45 + 0.4 * Math.sin(t * 1.3 + st.ph)).toFixed(2)); });
     guide.setAttribute('opacity', (0.55 + 0.45 * E.sine(prog(t, 39.2, 41))).toFixed(3));
     for (const c of caves) {
       const k = clamp((t - c.at) / 0.35);
-      c.lit.setAttribute('opacity', k <= 0 ? '0' : (k * (0.88 + 0.12 * flick(t, c.seed))).toFixed(3));
+      c.lit.setAttribute('opacity', k <= 0 ? '0' : (k * c.brightness * (0.91 + 0.09 * flick(t, c.seed))).toFixed(3));
     }
     // 出路
     const uF = PL.uF(t);
@@ -248,19 +259,18 @@ function buildS8(L) {
         const v = burn[i], j = i * 4;
         const a = smoothstep(tt, tt + 0.012, v);
         maskI.data[j + 3] = a * 255;
-        const c = (1 - smoothstep(tt + 0.012, tt + 0.1, v)) * a;
-        charI.data[j] = 40; charI.data[j + 1] = 18; charI.data[j + 2] = 6; charI.data[j + 3] = c * 235;
-        const gl = Math.exp(-(((v - tt) / 0.013) ** 2));
-        glowI.data[j] = 255; glowI.data[j + 1] = 150 + 90 * gl; glowI.data[j + 2] = 60 + 120 * gl * gl; glowI.data[j + 3] = gl * 255;
+        const c = (1 - smoothstep(tt + .011, tt + .046, v)) * a;
+        const ash=(1-smoothstep(tt+.018,tt+.034,v))*smoothstep(tt+.009,tt+.016,v);
+        charI.data[j] = 15+ash*30; charI.data[j + 1] = 13+ash*27; charI.data[j + 2] = 12+ash*23; charI.data[j + 3] = c * 250;
+        const gl = Math.exp(-(((v - tt - .003) / .0065) ** 2));
+        glowI.data[j] = 255; glowI.data[j + 1] = 126 + 58 * gl; glowI.data[j + 2] = 38 + 40 * gl; glowI.data[j + 3] = gl * 255 * burnHeat[i];
       }
       maskX.putImageData(maskI, 0, 0); charX.putImageData(charI, 0, 0); glowX.putImageData(glowI, 0, 0);
       paperX.globalCompositeOperation = 'source-over';
       paperX.clearRect(0, 0, 1000, 700);
       if (deedSrc instanceof HTMLImageElement) {
-        const sc = Math.max(1000 / deedSrc.naturalWidth, 700 / deedSrc.naturalHeight), dw = deedSrc.naturalWidth * sc, dh = deedSrc.naturalHeight * sc;
-        paperX.fillStyle = '#d9c49a'; paperX.fillRect(0, 0, 1000, 700);
-        paperX.drawImage(deedSrc, (1000 - dw) / 2, (700 - dh) / 2, dw, dh);
-        paperX.fillStyle = 'rgba(140,100,50,0.18)'; paperX.fillRect(0, 0, 1000, 700);
+        // Virtual burn surface is 1000x700; paperM restores the supplied portrait aspect ratio.
+        paperX.drawImage(deedSrc, 0, 0, 1000, 700);
       } else paperX.drawImage(deedSrc, 0, 0);
       paperX.globalCompositeOperation = 'destination-in';
       paperX.drawImage(maskC, 0, 0, 1000, 700);
@@ -279,10 +289,10 @@ function buildS8(L) {
       ctx.shadowColor = 'transparent';
       ctx.globalCompositeOperation = 'lighter';
       ctx.drawImage(glowC, 0, 0, 1000, 700);
-      ctx.globalAlpha = on * 0.45;
-      ctx.drawImage(glowC, -18, -14, 1036, 728);
-      ctx.globalAlpha = on * 0.25;
-      ctx.drawImage(glowC, -40, -30, 1080, 760);
+      ctx.globalAlpha = on * 0.09;
+      ctx.drawImage(glowC, -10, -8, 1020, 716);
+      ctx.globalAlpha = on * 0.025;
+      ctx.drawImage(glowC, -25, -18, 1050, 736);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }

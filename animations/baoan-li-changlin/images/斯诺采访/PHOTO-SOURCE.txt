@@ -1,0 +1,27 @@
+Selected historical landscape asset
+
+File: loess-country-1937-bisson.png
+Dimensions: 1730 x 1110 pixels
+Visual check: monochrome loess ravine and rural landscape; no captions, logos, portraits or visible signage. Extracted by rendering the photo region of an archival book scan, without AI generation or content alteration.
+
+Image identity and date
+The source book labels the upper photo on PDF page 58 as "10. Loess country." The narrative under Sunday, June 20 [1937], refers to photographs 10 and 11 during the party's northward journey through loess country toward Yenan (Yan'an). This is a 1937 travel landscape from the T. A. Bisson expedition, not a photograph verified as Edgar Snow's work, and not verified as Bao'an town. Do not label it as Snow, Bao'an, or as taken in 1936.
+
+Downloaded source scan (University of California, Berkeley)
+https://digicoll.lib.berkeley.edu/record/58545/files/CRM_11.pdf
+Book: T. A. Bisson, Yenan in June 1937: Talks with the Communist Leaders, China Research Monographs 11, University of California, Berkeley.
+Local full source: bisson-yenan-june1937.pdf
+Local context preview: bisson-1937-loess-page58.png
+
+Archival photo rights evidence
+University of Maine, T. A. Bisson Papers, MS 54:
+"Yenan, China, Loess Country"
+https://digitalcommons.library.umaine.edu/spec_photos/2412/
+The indexed archival record describes the original black-and-white photo, verso caption "Loess Country", from the Bisson trip associated with the above book.
+The institution states: "No known restrictions on publication." It also says rights assessment remains the responsibility of the researcher. This is an institutional no-known-restrictions statement, not a conclusive public-domain determination or a Creative Commons license.
+
+Requested archival credit (keep in engineering documentation/credits; not overlaid on animation):
+Image courtesy of Special Collections, Raymond H. Fogler Library, DigitalCommons@UMaine, MS 54, T. A. Bisson Papers; scanned printed reproduction courtesy of the University of California, Berkeley Library.
+
+Access caveat, checked 2026-10-02
+The University of Maine Digital Commons site has sunset as of June 30, 2026 and now redirects to a notice about the new Specto repository. The old photo record and its rights statement remain available in the search index, but the original standalone JPEG was not retrieved. The supplied asset is instead the photo-region render from the directly downloaded Berkeley source book. Original-photo-to-reproduction identity is supported by matching captions and book-series reference, not by a fresh visual comparison to the unavailable Maine JPEG. Do not claim CC0 or an absolute worldwide public-domain guarantee.

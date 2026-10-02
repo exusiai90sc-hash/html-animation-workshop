@@ -68,11 +68,11 @@
     const r=values(response),phase=(t-24.7)*Math.PI*2/3.3,k=io3(prog(t,28.85,29.77));
     // Baseline V10 breathing/transition remains; the authored timed brace is
     // removed so a response occurs only when a contact pulse/envelope is supplied.
-    const torsoAngle=.28*Math.sin(phase)-4*k+r.torso;
+    const torsoAngle=.28*Math.sin(phase)-4*k+2.5*r.torso;
     const shoulderBob=lerp(3,2,k)*(Math.sin(phase)+.12*Math.sin(2*phase));
     // Upper-body shortening is absorbed at the waist. Feet retain exact V10
-    // matrices. 4 stage px maximum shoulder sink over a 200 source px torso.
-    const torso=M.chain(M.t(0,shoulderBob),rot(torsoAngle,waist),aroundScale(1,1-r.shoulder/(SCALE*200),waist));
+    // matrices. The same response timing maps to a clearer, bounded shoulder sink.
+    const torso=M.chain(M.t(0,shoulderBob),rot(torsoAngle,waist),aroundScale(1,1-2.8*r.shoulder/(SCALE*200),waist));
     const cn=map(torso,contact),sn=map(torso,shoulder);
     const yokeAngle=lerp(.80,.52,k)*Math.sin(phase-.25)-2*k+r.torso*.14;
     const yoke=M.chain(M.t(...cn),M.r(yokeAngle*DEG),M.t(-contact[0],-contact[1]));
@@ -80,11 +80,11 @@
     const a=(upperLength**2-foreLength**2+distance**2)/(2*distance),h=Math.sqrt(Math.max(0,upperLength**2-a*a));
     const en=[sn[0]+ex*a-ey*h,sn[1]+ey*a+ex*h];
     const pose={torso,waist_skirt:M.chain(M.t(0,shoulderBob),rot(torsoAngle,waist)),near_upper_sleeve:bone(shoulder,elbow,sn,en),near_forearm_hand:bone(elbow,grip,en,gn),yoke};
-    const headLocal=.8+.40*Math.sin(phase-.7)-10*k+r.head;
+    const headLocal=.8+.40*Math.sin(phase-.7)-10*k+3*r.head;
     pose.head_neck=M.chain(torso,rot(headLocal,neck));
     // Only the contacted back/sleeve layer compresses locally. Small affine
     // cloth strain plus inward offset is bounded; it is not a full-PNG twitch.
-    const c=r.compression/SCALE;
+    const c=1.25*r.compression/SCALE;
     const localCloth=M.chain(M.t(.76*c,.43*c),aroundScale(1-.003*c,1-.002*c,farShoulder));
     const farBase=M.chain(torso,rot(.22*Math.sin(phase+.6),farShoulder));
     pose.far_sleeve=M.chain(farBase,localCloth);

@@ -133,12 +133,36 @@ async function makeScene(sourceDir,options={}){
   const scripts=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].map(m=>({src:m[1].match(/\bsrc\s*=\s*["']([^"']+)["']/i)?.[1],inline:m[2]}));
   parseMarkup(html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,''),doc,doc);
   doc.documentElement=doc.querySelector('html');doc.body=doc.querySelector('body');doc.head=doc.querySelector('head');
+  const sharedTextureDefs = new Map();
   function serialize(node=doc.getElementById('world'),opts={}){
+    if(opts.shareTextureImages&&!opts._sharedTextureMap&&node?.tagName==='svg'){
+      const refs=new Map();
+      const xml=serialize(node,{...opts,_sharedTextureMap:refs});
+      if(!refs.size)return xml;
+      return xml.replace(/^<svg\b[^>]*>/,opening=>opening+'<defs>'+[...refs.values()].join('')+'</defs>');
+    }
     if(node?.nodeType===3)return escapeXML(node.textContent);
     if(!node)return '';
     if(opts.pruneHidden&&node.style?.display==='none')return '';
     const attrs={...node._attrs};if(node.style?.cssText)attrs.style=node.style.cssText;
     if(node.tagName==='svg'&&!attrs.xmlns)attrs.xmlns=NS;
+    if(opts._sharedTextureMap&&node.tagName==='image'&&attrs.preserveAspectRatio==='none'&&
+      !Object.keys(attrs).some(k=>!['href','x','y','width','height','preserveAspectRatio'].includes(k))&&
+      [attrs.x||'0',attrs.y||'0',attrs.width,attrs.height].every(v=>Number.isFinite(Number(v)))&&Number(attrs.width)>0&&Number(attrs.height)>0){
+      const rec=assets.get(attrs.href);
+      if(rec&&!rec.then&&rec.path===null){
+        const key=rec.pngSha256+'|'+attrs.width+'|'+attrs.height;
+        let shared=sharedTextureDefs.get(key);
+        if(!shared){
+          const id='render-shared-'+hash(key);
+          shared={id,xml:'<image id="'+id+'" href="'+rec.dataURI+'" width="'+escapeXML(attrs.width)+'" height="'+escapeXML(attrs.height)+'" preserveAspectRatio="none"></image>'};
+          sharedTextureDefs.set(key,shared);
+        }
+        opts._sharedTextureMap.set(shared.id,shared.xml);
+        return '<use href="#'+shared.id+'" x="'+escapeXML(attrs.x||'0')+'" y="'+escapeXML(attrs.y||'0')+'"></use>';
+      }
+    }
+
     for(const k of ['href','xlink:href'])if(attrs[k]&&!attrs[k].startsWith('#')&&['image','use'].includes(node.tagName.toLowerCase())){const rec=assets.get(attrs[k]);if(!rec||rec.then)throw new Error('Asset was not decoded before serialization: '+attrs[k].slice(0,160));attrs[k]=rec.dataURI;}
     if(opts.omitRootTransform&&node===doc.getElementById('world')&&attrs.style)attrs.style=attrs.style.replace(/(?:^|;)transform:[^;]*(?:;|$)/,';').replace(/^;|;$/g,'');
     const at=Object.entries(attrs).filter(([,v])=>v!==null&&v!==undefined&&v!=='').map(([k,v])=>' '+k+'="'+escapeXML(v)+'"').join('');

@@ -6,6 +6,13 @@
  * Root tangent follows the handle; the curve grazes the transformed source sleeve.
  * The unconstrained free endpoint passes below/outside the back before rebound.
  * Authored geometry and timing, not a force/rope simulation or a fixed-length solve. */
+// One rounded width definition serves both drawing and flank contact.
+const V6_WHIP_STROKE={
+  cuts:[0,.12,.24,.36,.48,.60,.70,.80,.90,1],
+  width:i=>Math.round((20.4-i*1.15)*10)/10,
+  rim:i=>Math.round((10.0-i*.55)*10)/10,
+  radiusAt(u){let r=0;for(let i=0;i<9;i++)if(u>=this.cuts[i]-1e-9&&u<=this.cuts[i+1]+1e-9)r=Math.max(r,this.width(i)/2);return r;}
+};
 const V6Whip=(()=>{
   const clamp=x=>Math.max(0,Math.min(1,x)),mix=(a,b,u)=>a+(b-a)*u;
   const io=x=>{x=clamp(x);return x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;};
@@ -22,7 +29,7 @@ const V6Whip=(()=>{
     const hand=[origin[0]+wx*scale,origin[1]+wy*scale],rad=angle*Math.PI/180,handleLength=(cfg.handleLength||90)*scale;
     const root=[hand[0]+Math.cos(rad)*handleLength,hand[1]+Math.sin(rad)*handleLength];
     const supplied=cfg.backTangent||[-.5734623444,.8192319205],tl=Math.hypot(...supplied),T=supplied.map(x=>x/tl),outward=[-T[1],T[0]];
-    const uc=cfg.contactParam||.80,contactBand=Math.min(8,Math.floor(uc*9)),radius=(15-contactBand*.85)/2;
+    const uc=cfg.contactParam||.80,radius=V6_WHIP_STROKE.radiusAt(uc);
     const smooth=x=>{x=clamp(x);return x*x*x*(10+x*(-15+6*x));};
     let slide,gap,derivativeSpeed;
     if(d<0){const z=progress(d,-.40,0),a=-1.2*z*z*z+2.2*z*z;
@@ -77,14 +84,14 @@ const V6Whip=(()=>{
 if(typeof module!=='undefined'&&module.exports)module.exports=V6Whip;
 function buildV6Whip(root,beforeNode,config={}){
   const g=G(root,{id:'v6-traveling-whip'});if(beforeNode){g.remove();root.insertBefore(g,beforeNode);}
-  const bands=Array.from({length:9},(_,i)=>el('path',{fill:'none',stroke:'#0b1115','stroke-width':r1(15.0-i*.85),'stroke-linecap':'round','stroke-linejoin':'round'},g));
-  const rims=Array.from({length:9},(_,i)=>el('path',{fill:'none',stroke:'#c4bbaa','stroke-width':r1(7.3-i*.40),'stroke-linecap':'round','stroke-linejoin':'round',opacity:.95},g));
+  const bands=Array.from({length:9},(_,i)=>el('path',{fill:'none',stroke:'#0b1115','stroke-width':V6_WHIP_STROKE.width(i),'stroke-linecap':'round','stroke-linejoin':'round'},g));
+  const rims=Array.from({length:9},(_,i)=>el('path',{fill:'none',stroke:'#c4bbaa','stroke-width':V6_WHIP_STROKE.rim(i),'stroke-linecap':'round','stroke-linejoin':'round',opacity:.95},g));
   const hand=G(root,{id:'v6-driving-hand'});
   if(config.driverImage){const z=config.driverImage;el('image',{href:z.href,x:z.origin[0],y:z.origin[1],width:z.size[0],height:z.size[1]},hand);}
   return {update(t,target,backTangent){const q=V6Whip.at(t,target,{...config,backTangent}),N=q.nodes.length-1;
     const evalCurve=u=>{const tail=u>.8,p=tail?q.tailControls:q.controlPoints,z=tail?(u-.8)/.2:u;return [0,1].map(j=>(1-z)**3*p[0][j]+3*(1-z)**2*z*p[1][j]+3*(1-z)*z*z*p[2][j]+z*z*z*p[3][j]);};
     const evalDerivative=u=>{const tail=u>.8,p=tail?q.tailControls:q.controlPoints,z=tail?(u-.8)/.2:u;return [0,1].map(j=>(3*(1-z)**2*(p[1][j]-p[0][j])+6*(1-z)*z*(p[2][j]-p[1][j])+3*z*z*(p[3][j]-p[2][j]))*(tail?5:1));};
-    bands.forEach((p,i)=>{const cuts=[0,.12,.24,.36,.48,.60,.70,.80,.90,1],a=cuts[i],b=cuts[i+1],A=evalCurve(a),B=evalCurve(b),DA=evalDerivative(a),DB=evalDerivative(b),h=(b-a)/3;
+    bands.forEach((p,i)=>{const cuts=V6_WHIP_STROKE.cuts,a=cuts[i],b=cuts[i+1],A=evalCurve(a),B=evalCurve(b),DA=evalDerivative(a),DB=evalDerivative(b),h=(b-a)/3;
       const C=A.map((x,j)=>x+DA[j]*h),D=B.map((x,j)=>x-DB[j]*h),xy=v=>v.map(r1).join(',');
       const d=`M${xy(A)}C${xy(C)} ${xy(D)} ${xy(B)}`;p.setAttribute('d',d);rims[i].setAttribute('d',d);});
     const z=config.driverImage;if(z){const dx=z.tip[0]-z.grip[0],dy=z.tip[1]-z.grip[1],s=(config.handleLength||90)*(config.scale||1)/Math.hypot(dx,dy),a=q.handleAngle-Math.atan2(dy,dx)/DEG;hand.setAttribute('transform',`translate(${r1(q.hand[0])},${r1(q.hand[1])}) rotate(${r1(a)}) scale(${s}) translate(${-z.grip[0]},${-z.grip[1]})`);}vis(g,q.opacity);vis(hand,q.opacity);window.__v6WhipLast=q;return q;

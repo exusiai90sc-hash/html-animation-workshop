@@ -273,11 +273,54 @@ function buildS56(L) {
   const glint = el('rect', { x: 0, y: -80, width: 48, height: 180, fill: 'url(#g-sweep)' }, glintG);
   const grip=G(root,{id:'v5-supporting-hand'});
   const character=buildV5Character({body,grip});
-  // A cropped accusing hand. Direction and repeated jabs carry the scolding, without text.
+  // Accusing hand derived in the approved paper-cut language; the original rig remains unchanged.
   const pointing=G(root,{id:'v2-scolding-gesture'});
-  el('path',{d:'M2300,-112L228,-103L165,-65L165,79L2300,145Z',fill:'#202d36',stroke:'#64727b','stroke-width':3},pointing);
-  el('path',{d:'M218,-87L132,-83L85,-93Q54,-109 17,-95L-34,-55L-260,-64Q-290,-63 -292,-45Q-290,-24 -264,-24L-77,-17L-120,6Q-145,20 -131,39Q-114,57 -83,42L-112,64Q-120,86 -96,92L-39,82L16,69L72,75L159,55L219,55Z',fill:'#1b2a34',stroke:'#7a888e','stroke-width':2},pointing);
-  el('path',{d:'M-78,-17L-18,-17L34,14M-83,42L-13,25M-39,82L19,52',fill:'none',stroke:'#251a13','stroke-width':4},pointing);
+  const pointSleeveD='M2300,-112L228,-103L165,-65L165,79L2300,145Z';
+  // Keep the original index tip and length. Three compact curled digits sit below it.
+  const pointHandD='M218,-87L132,-83L85,-93Q54,-109 17,-95L-34,-55L-260,-64Q-290,-63 -292,-45Q-290,-24 -264,-24L-77,-17Q-102,-4 -100,12Q-99,32 -84,37Q-73,41 -65,31Q-83,46 -77,62Q-70,83 -53,81L-37,71Q-38,87 -24,91Q-8,97 16,69L72,75L159,55L219,55Z';
+  const pointClip=(id,d)=>{const cp=el('clipPath',{id,clipPathUnits:'userSpaceOnUse'},DEFS);el('path',{d},cp);return `url(#${id})`;};
+  const pointSleeveClip=pointClip('scold-paper-sleeve-clip',pointSleeveD);
+  const pointHandClip=pointClip('scold-paper-hand-clip',pointHandD);
+  el('path',{d:pointSleeveD,fill:'#353b3f'},pointing);
+  const pointSleeve=G(pointing,{'clip-path':pointSleeveClip});
+  [
+    ['M279,-100L576,-103L425,-28L312,47L220,78Z','#51575a',.48],
+    ['M369,-61L842,-105L1298,-108L744,-35L424,21Z','#737678',.14],
+    ['M302,72L542,-15L751,9L1088,108L431,87Z','#181e22',.27],
+    ['M632,-48L1351,-109L2052,-110L1453,-8L845,16Z','#535a5d',.18],
+    ['M900,43L1648,65L2300,28L2300,145L1265,114Z','#181e22',.19],
+    ['M228,-103L292,-103L265,-47L238,31L218,80L165,79L165,-65Z','#6b6e70',1],
+    ['M230,-99L280,-101L246,-33L177,64L165,35L208,-45Z','#959597',.43],
+    ['M165,-65L220,-96L191,-26L176,42L165,72Z','#454b4f',.65],
+    ['M185,75L254,-52L238,30L218,80Z','#3e4448',.62],
+    ['M224,-80L252,-94L203,12Z','#bab9b6',.20]
+  ].forEach(([d,fill,opacity])=>el('path',{d,fill,opacity},pointSleeve));
+  el('path',{d:'M280,-100L265,-47L238,31L218,79M308,-74L400,-98M293,54L364,12',fill:'none',stroke:'#242c30','stroke-width':2.3,opacity:.64,'stroke-linecap':'round'},pointSleeve);
+  el('path',{d:pointSleeveD,fill:'url(#pat-paper)',opacity:.46},pointSleeve);
+  el('path',{d:pointSleeveD,fill:'url(#pat-grit)',opacity:.30},pointSleeve);
+  // Quiet charcoal planes keep the hand in the same material family as the source cutouts.
+  el('path',{d:pointHandD,fill:'#272c2f'},pointing);
+  const pointPalm=G(pointing,{'clip-path':pointHandClip});
+  [
+    ['M-288,-51Q-240,-54 -179,-52L-102,-47L-39,-44L-25,-54L-261,-63Z','#5c6264',.32],
+    ['M-281,-29L-172,-30L-91,-24L-57,-30L-44,-12L-107,-11Z','#11191e',.47],
+    ['M-34,-55L17,-95Q54,-109 85,-93L132,-83L151,-53L93,-22L32,-2L-2,-25Z','#40464a',.56],
+    ['M40,-68L119,-55L160,-34L155,48L79,69L17,58L28,26L59,7Z','#353b3f',.44],
+    ['M-78,-10Q-98,0 -97,14Q-94,29 -85,31Q-74,32 -65,22L-43,9Z','#52595c',.37],
+    ['M-64,33Q-77,45 -73,59Q-67,73 -55,75L-44,66L-21,31Z','#52595c',.33],
+    ['M-31,60Q-34,79 -23,84Q-10,86 0,72L17,48Z','#61676a',.29],
+    ['M-18,5L18,17L9,53L-12,75L-28,85L16,69L72,75L98,51L69,24Z','#151d22',.29]
+  ].forEach(([d,fill,opacity])=>el('path',{d,fill,opacity},pointPalm));
+  // The thumb crosses the folded fingers once, rather than creating a fourth curl.
+  el('path',{d:'M30,-84Q13,-78 1,-65L-17,-51Q-24,-43 -13,-31L25,8Q38,20 50,9Q58,0 49,-13L22,-47L48,-69Z',fill:'#3d4448'},pointPalm);
+  el('path',{d:'M31,-77L6,-55Q-2,-45 7,-35L31,-12Q40,-4 48,-5L39,-20L17,-48Z',fill:'#676d6f',opacity:.28},pointPalm);
+  el('path',{d:'M-16,-50Q-24,-42 -13,-31L25,8Q38,20 50,9M-75,-14Q-42,-19 -16,-7M-65,31Q-47,33 -24,14M-37,71Q-18,63 0,32M16,69Q34,56 42,36',fill:'none',stroke:'#11191e','stroke-width':3.3,'stroke-linecap':'round',opacity:.83},pointPalm);
+  // Short joint creases interrupt the long index without bending its established axis.
+  el('path',{d:'M-215,-56Q-211,-45 -215,-34M-131,-53Q-123,-41 -128,-29M-94,10Q-83,9 -74,20M-73,49Q-61,48 -52,59M-31,76Q-22,73 -15,80M29,-5Q37,-9 43,-7',fill:'none',stroke:'#9b9d9d','stroke-width':2.0,'stroke-linecap':'round',opacity:.53},pointPalm);
+  el('path',{d:'M-220,-54Q-216,-44 -219,-36M-137,-50Q-129,-40 -133,-31',fill:'none',stroke:'#151d21','stroke-width':2.3,'stroke-linecap':'round',opacity:.69},pointPalm);
+  el('path',{d:pointHandD,fill:'url(#pat-paper)',opacity:.38},pointPalm);
+  el('path',{d:pointHandD,fill:'url(#pat-grit)',opacity:.22},pointPalm);
+  el('path',{d:'M-286,-51Q-276,-59 -259,-59L-216,-57M-204,-57L-143,-55M-119,-54L-36,-49M-98,16Q-98,31 -85,36M-76,61Q-70,79 -55,80',fill:'none',stroke:'#858a8c','stroke-width':1.45,opacity:.43,'stroke-linecap':'round'},pointPalm);
   const whipping=buildV5Whip(root,carry);
   const surfaceDetails=buildV2SurfaceDetails({poleG,body,rifleG,pastW});
   const farmerV6=buildV7SourceCharacter(root,{body,carry,grip,basket,rearBasket});
@@ -470,20 +513,55 @@ function buildS56(L) {
 function buildS7(L) {
   const s = addScene({ name: 'S7', t0: 34.9, t1: 39.05, roots: [L.s7] });
   const world = G(L.s7);
-  lgrad('g-s7-sky', [[0, '#04070d'], [1, '#101a2a']]);
-  el('rect', { x: -1600, y: -1600, width: 5120, height: 2200, fill: 'url(#g-s7-sky)' }, world);
+  lgrad('g-s7-sky', [[0, '#04070d'], [0.48, '#0b1422'], [1, '#101a2a']], {gradientUnits:'userSpaceOnUse',x1:0,y1:-250,x2:0,y2:1450});
+  el('rect', { x: -1600, y: -1600, width: 5120, height: 4200, fill: 'url(#g-s7-sky)' }, world);
   const bokeh = G(world);
   [[300, 250, 60], [520, 300, 40], [760, 220, 52], [1180, 280, 46], [1420, 240, 64], [1680, 300, 42], [980, 330, 30]].forEach(([x, y, r]) => el('circle', { cx: x, cy: y, r, fill: 'url(#g-bokeh)' }, bokeh));
-  el('rect', { x: -1600, y: 500, width: 5120, height: 3000, fill: '#141a22' }, world);
   const cap = buildCapFront(world, {});
-  // 冷光
-  el('rect', { x: -1600, y: 100, width: 5120, height: 3000, fill: '#1c2c48', style: 'mix-blend-mode:multiply', opacity: 0.55 }, world);
+  // 夜空延伸到帽檐后方；共享构造中的全宽黑色底幕在这一镜头不用。
+  cap.underBrimBackdrop.setAttribute('opacity',0);
+  // 冷光只作用于布帽实体，避免矩形边界切断背景天空。
+  const coldCP = uid('cp');
+  const coldClip = el('clipPath', { id: coldCP }, DEFS);
+  el('path', { d: cap.crownD }, coldClip);
+  el('path', { d: 'M280,740Q960,786 1640,740L1654,800Q960,850 266,800Z' }, coldClip);
+  el('path', { d: 'M266,800Q960,850 1654,800L1690,832Q960,1030 230,832Z' }, coldClip);
+  el('rect', { x: -1600, y: 100, width: 5120, height: 3000, fill: '#1c2c48', style: 'mix-blend-mode:multiply', opacity: 0.55, 'clip-path': `url(#${coldCP})` }, world);
   softStroke(world, 'M160,360L380,222L680,158L960,146L1240,158L1540,222L1760,360', '#a9c3e6', 4, 0.5);
-  // 积雪
+  // 沿帽顶、帽墙和帽檐承接面的不连续薄积雪，不再用三条等宽白边。
   const snowcap = G(world);
-  el('path', { d: 'M230,832Q960,1030 1690,832L1680,850Q960,1046 240,850Z', fill: '#e4ecf6', opacity: 0.6 }, snowcap);
-  el('path', { d: 'M160,360L380,222L680,158L960,146L1240,158L1540,222L1760,360L1756,376L1538,238L1238,172L960,160L682,172L382,238L164,376Z', fill: '#e8eff8', opacity: 0.7 }, snowcap);
-  el('path', { d: 'M280,740Q960,786 1640,740L1642,752Q960,798 278,752Z', fill: '#e4ecf6', opacity: 0.45 }, snowcap);
+  const deposit = (parent, pts, width, phase, opacity, inward = 1) => {
+    let ribbon = '', grains = '', facets = '';
+    for (let i = 0; i < pts.length - 1; i++) {
+      const A = pts[i], B = pts[i + 1], dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy);
+      const nx = -dy / len * inward, ny = dx / len * inward;
+      const outer = [], inner = [], n = Math.max(3, Math.ceil(len / 8));
+      for (let j = 0; j <= n; j++) {
+        const k = j / n, x = lerp(A[0], B[0], k), y = lerp(A[1], B[1], k);
+        const w = width * (0.52 + 0.22 * Math.sin(j * 1.79 + phase + i) + 0.2 * Math.sin(j * 0.47 + i * 1.3));
+        outer.push([x + nx * 0.5, y + ny * 0.5]);
+        inner.push([x + nx * w, y + ny * w]);
+        if (j > 0 && j < n && (j + i) % 3 !== 0) {
+          const t = (j + i * 2) % 5, px = x + nx * (w + 1.5), py = y + ny * (w + 1.5);
+          grains += `M${r1(px)},${r1(py)}l${r1(nx * (2 + t))},${r1(ny * (2 + t))}`;
+          facets += `M${r1(x + nx * 1.4)},${r1(y + ny * 1.4)}l${r1(dx / len * (2 + t))},${r1(dy / len * (2 + t))}`;
+        }
+      }
+      ribbon += poly(outer.concat(inner.reverse()), true);
+    }
+    el('path', { d: ribbon, fill: '#dce6e9', opacity }, parent);
+    el('path', { d: grains, fill: 'none', stroke: '#c6d9e0', 'stroke-width': 1.25, opacity: opacity * 0.62 }, parent);
+    el('path', { d: facets, fill: 'none', stroke: '#f5f8ee', 'stroke-width': 1.3, opacity: opacity * 0.8 }, parent);
+  };
+  deposit(snowcap, [[160,360],[380,222],[680,158],[960,146],[1240,158],[1540,222],[1760,360]], 10, 0.6, 0.68);
+  const bandEdge = [], brimEdge = [];
+  for (let j = 0; j <= 16; j++) {
+    const k = j / 16;
+    bandEdge.push([lerp(280, 1640, k), 740 + 92 * k * (1 - k)]);
+    brimEdge.push([lerp(230, 1690, k), 832 + 396 * k * (1 - k)]);
+  }
+  deposit(snowcap, bandEdge, 7, 2.1, 0.53);
+  deposit(snowcap, brimEdge, 9, 3.7, 0.61, -1);
   const SC = CAPSTAR;
   // 红星内部的暖光
   const glow = el('circle', { cx: SC.x, cy: SC.y, r: 360, fill: 'url(#g-glow-red)', opacity: 0, style: 'mix-blend-mode:screen' }, world);
@@ -497,22 +575,48 @@ function buildS7(L) {
   rgrad('g-s7-melt', [[0, '#000'], [0.72, '#000'], [1, '#000', 0]]);
   const melt = el('circle', { cx: SC.x, cy: SC.y, r: 0, fill: 'url(#g-s7-melt)' }, mask);
   const frost = G(world, { mask: `url(#${mk})` });
-  el('path', { d: cap.starPath, fill: '#e9f1fb', opacity: 0.5 }, frost);
-  el('path', { d: cap.starPath, fill: 'url(#pat-grit)', opacity: 0.6 }, frost);
-  const FR = rng(17);
-  let dots = '', cry = '';
-  for (let i = 0; i < 900; i++) {
-    const onStar = i < 520;
-    const a = FR() * 6.283, rr = onStar ? Math.sqrt(FR()) * 165 : 130 + FR() * 900;
-    const x = SC.x + Math.cos(a) * rr * (onStar ? 1 : 1.3), y = SC.y + Math.sin(a) * rr * (onStar ? 1 : 0.55);
-    dots += circlePath(r1(x), r1(y), r1(0.6 + FR() * (onStar ? 2.2 : 1.6)));
+  // 贴花上的霜膜、纱线挂霜及锯齿状边霜，全都裁在真实布片内。
+  const starFrost = G(frost, { 'clip-path': `url(#${cp})` });
+  el('path', { d: cap.starPath, fill: '#e1eaeb', opacity: 0.34 }, starFrost);
+  const FP = starPts(SC.x, SC.y, SC.R, SC.R * 0.4);
+  deposit(starFrost, FP.concat([FP[0]]), 9, 1.2, 0.54);
+  deposit(starFrost, FP.concat([FP[0]]), 2.6, 2.4, 0.42);
+  let iceFibers = '', icePlates = '';
+  // 小冰片沿纱向断续相连，无游离的六瓣雪花图标。
+  for (let row = 0; row < 44; row++) {
+    const y = 303 + row * 6.4;
+    for (let col = 0; col < 18; col++) {
+      const x = 814 + col * 16.6 + (row % 3) * 3.2 + 3.1 * Math.sin(row * 0.73 + col * 1.27);
+      if ((col * 3 + row * 5) % 11 > 6) continue;
+      const l = 3 + (row + col * 2) % 6, bend = 0.8 + (row % 3) * 0.4;
+      const fy = y + 2.3 * Math.sin(row * 1.67 + col * 2.19);
+      iceFibers += `M${r1(x)},${r1(fy)}q${r1(l * 0.5)},${bend} ${l},0`;
+      if ((col + row * 2) % 5 === 0) icePlates += `M${r1(x)},${r1(fy - 1)}l${l},-1 2,2 ${-l + 2},2Z`;
+    }
   }
-  for (let i = 0; i < 90; i++) {
-    const a = FR() * 6.283, rr = Math.sqrt(FR()) * 230, x = SC.x + Math.cos(a) * rr, y = SC.y + Math.sin(a) * rr * 0.9, sz = 4 + FR() * 9, r0 = FR();
-    for (let k = 0; k < 3; k++) { const b = r0 + (k * Math.PI) / 3; cry += `M${r1(x - Math.cos(b) * sz)},${r1(y - Math.sin(b) * sz)}L${r1(x + Math.cos(b) * sz)},${r1(y + Math.sin(b) * sz)}`; }
-  }
-  el('path', { d: dots, fill: '#f4f8ff', opacity: 0.85 }, frost);
-  el('path', { d: cry, stroke: '#f4f8ff', 'stroke-width': 1.3, opacity: 0.75 }, frost);
+  el('path', { d: iceFibers, fill: 'none', stroke: '#f2f6ef', 'stroke-width': 1.05, opacity: 0.65 }, starFrost);
+  el('path', { d: icePlates, fill: '#edf5f2', opacity: 0.58 }, starFrost);
+  // 帽面挂霜优先停在车缝、褶脊和迎风的上半部；中心融化遮罩仍共用。
+  const crownCP = uid('cp'); el('path', { d: cap.crownD }, el('clipPath', { id: crownCP }, DEFS));
+  const seamFrost = G(frost, { 'clip-path': `url(#${crownCP})` });
+  [[380,222,450,770],[680,158,700,790],[1240,158,1220,790],[1540,222,1470,770]].forEach(([x1,y1,x2,y2], i) => {
+    const upper = [0.02,0.11,0.15,0.28,0.36,0.44,0.53,0.61,0.72];
+    for (let j = 0; j < upper.length - 1; j += 2) {
+      const a = upper[j], b = upper[j + 1];
+      deposit(seamFrost, [[lerp(x1,x2,a),lerp(y1,y2,a)],[lerp(x1,x2,b),lerp(y1,y2,b)]], 4.8 - j * 0.34, i + j * 0.7, 0.53 - j * 0.037, i < 2 ? -1 : 1);
+    }
+  });
+  let caught = '';
+  const frostBeds = [[418,288,170,122],[708,203,193,89],[1088,204,157,106],[1370,306,142,144],[754,696,107,29],[1263,684,173,45]];
+  frostBeds.forEach(([x,y,w,h], i) => {
+    for (let j = 0; j < 48; j++) {
+      const u = ((j * 17) % 47) / 47, v = ((j * 29) % 53) / 53;
+      if (u * u + v * v > 1) continue;
+      const px = x + u * w, py = y + v * h, l = 1.4 + (j % 4) * 0.8;
+      caught += `M${r1(px)},${r1(py)}l${r1(l)},${r1(0.35 + i * 0.06)}`;
+    }
+  });
+  el('path', { d: caught, fill: 'none', stroke: '#d8e7e8', 'stroke-width': 0.9, opacity: 0.38 }, seamFrost);
   const flare = el('circle', { cx: SC.x, cy: SC.y, r: 200, fill: 'url(#g-glow-gold)', opacity: 0, style: 'mix-blend-mode:screen' }, world);
   const beats = [36.3, 37.15, 37.85, 38.35];
   const camK = [[34.9, [960, 540, 0.95, 0]], [38.5, [960, 490, 1.14, 0.004]], [39.05, [960, 462, 1.45, 0.006]]];

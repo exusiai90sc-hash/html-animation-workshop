@@ -160,7 +160,7 @@ function blurU(id, sd, x = -200, y = -200, w = 2320, h = 1480) {
 /** 设置不透明度，并在完全透明时隐藏（省渲染） */
 function vis(e, a) {
   a = clamp(a);
-  if (a <= 0.001) { if (e._v !== 0) { e.style.display = 'none'; e._v = 0; } return; }
+  if (a <= 0.001) { if (e._v !== 0 || e.style.display !== 'none') { e.style.display = 'none'; e._v = 0; } return; }
   if (e._v === 0 || e._v === undefined) e.style.display = '';
   if (e._v !== a) { e.setAttribute('opacity', a.toFixed(4)); e._v = a; }
 }
