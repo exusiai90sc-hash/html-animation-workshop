@@ -145,7 +145,7 @@ function buildS1(L) {
   let portraitImg = null;
   if (MATERIALS.li) {
     portraitImg = el('image', { href: MATERIALS.li, x: wn.x, y: wn.y, width: wn.w, height: wn.h, preserveAspectRatio: 'xMidYMid slice', style: 'filter:grayscale(1) contrast(1.06) brightness(1.02)' }, portrait);
-    el('rect', { x: wn.x, y: wn.y, width: wn.w, height: wn.h, fill: '#8a6236', style: 'mix-blend-mode:color', opacity: 0.55 }, portrait);
+    el('rect', { x: wn.x, y: wn.y, width: wn.w, height: wn.h, fill: '#cac8c3', style: 'mix-blend-mode:color', opacity: 0.12 }, portrait);
   }
   rgrad('g-s1-picvig', [[0, '#1a0f06', 0], [0.6, '#1a0f06', 0.12], [1, '#1a0f06', 0.7]], { r: 0.72 });
   const picAge = G(picFx);
@@ -327,10 +327,10 @@ function buildS2(L) {
   el('path', { d: 'M640,905C700,860 1260,850 1380,880C1430,905 1420,960 1360,985C1200,1020 780,1015 690,990C630,970 610,930 640,905Z', fill: 'url(#pat-grit)', opacity: 0.55 }, world);
   el('path', { d: 'M650,902C720,866 1250,856 1372,884', fill: 'none', stroke: '#c8baa0', 'stroke-width': 2, opacity: 0.5 }, world);
   // 借据（被碗压着）
-  const deedM = M.chain(M.t(1225, 905), M.r(174 * DEG), [1, 0, Math.tan(-6 * DEG), 1, 0, 0], M.s(0.36, 0.2));
+  const deedM = M.chain(M.t(1225, 905), M.r(174 * DEG), [1, 0, Math.tan(-6 * DEG), 1, 0, 0], M.s(0.20, 0.35714));
   const deedG = G(world, { transform: M.str(deedM) });
   softRect(deedG, -520, -380, 1000, 700, 0.4);
-  el('image', { href: MATERIALS.deed || DEED_URL(), x: -500, y: -350, width: 1000, height: 700, preserveAspectRatio: MATERIALS.deed ? 'xMidYMid slice' : 'none', style: MATERIALS.deed ? 'filter:sepia(.4) contrast(.95)' : null }, deedG);
+  el('image', { href: MATERIALS.deed || DEED_URL(), x: -500, y: -350, width: 1000, height: 700, preserveAspectRatio: 'none' }, deedG);
   el('rect', { x: -500, y: -350, width: 1000, height: 700, fill: '#2c1c0c', opacity: 0.22 }, deedG);
   // 碗
   buildBowl(world, { x: S2.bowl.x, y: S2.bowl.y, s: 1, cracked: true, grains: 9 });

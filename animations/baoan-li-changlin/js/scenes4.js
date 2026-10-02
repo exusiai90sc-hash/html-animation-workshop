@@ -179,7 +179,7 @@ function buildS8(L) {
   }
   const BT = [39.5, 42.95];
   const th = t => -0.03 + 1.12 * E.in2(prog(t, BT[0], BT[1]));
-  const paperM = t => M.chain(M.t(960, 565), M.r(-3 * DEG), M.s(lerp(1.2, 1.12, E.sine(prog(t, 38.6, 43)))), M.t(-500, -350));
+  const paperM = t => M.chain(M.t(960, 565), M.r(-3 * DEG), M.s(lerp(1.2, 1.12, E.sine(prog(t, 38.6, 43)))), M.s(0.56, 1), M.t(-500, -350));
   const embers = seeds(360, 141, R => {
     const x = R() * 1000, y = R() * 700, v = burn[Math.floor(y / 4) * BW + Math.floor(x / 4)];
     const p = Math.sqrt(clamp((v + 0.03) / 1.12));
@@ -257,10 +257,8 @@ function buildS8(L) {
       paperX.globalCompositeOperation = 'source-over';
       paperX.clearRect(0, 0, 1000, 700);
       if (deedSrc instanceof HTMLImageElement) {
-        const sc = Math.max(1000 / deedSrc.naturalWidth, 700 / deedSrc.naturalHeight), dw = deedSrc.naturalWidth * sc, dh = deedSrc.naturalHeight * sc;
-        paperX.fillStyle = '#d9c49a'; paperX.fillRect(0, 0, 1000, 700);
-        paperX.drawImage(deedSrc, (1000 - dw) / 2, (700 - dh) / 2, dw, dh);
-        paperX.fillStyle = 'rgba(140,100,50,0.18)'; paperX.fillRect(0, 0, 1000, 700);
+        // Virtual burn surface is 1000x700; paperM restores the supplied portrait aspect ratio.
+        paperX.drawImage(deedSrc, 0, 0, 1000, 700);
       } else paperX.drawImage(deedSrc, 0, 0);
       paperX.globalCompositeOperation = 'destination-in';
       paperX.drawImage(maskC, 0, 0, 1000, 700);

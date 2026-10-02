@@ -104,15 +104,8 @@ function buildS11b(L) {
     el('path', { d }, grass);
   }
   const groundGlow = el('ellipse', { cx: 960, cy: 815, rx: 420, ry: 90, fill: 'url(#g-glow-gold)', opacity: 0 }, world);
-  const flowers = [
-    { bx: 960, by: 800, hx: 975, hy: 470, sc: 1.0, bend: -30, at: 53.55 },
-    { bx: 820, by: 812, hx: 780, hy: 585, sc: 0.78, bend: 20, at: 53.72 },
-    { bx: 1120, by: 812, hx: 1165, hy: 600, sc: 0.8, bend: -26, at: 53.8 },
-    { bx: 680, by: 830, hx: 630, hy: 700, sc: 0.6, bend: 16, at: 53.95 },
-    { bx: 1280, by: 822, hx: 1330, hy: 712, sc: 0.6, bend: -18, at: 54.02 },
-  ].map(o => Object.assign(o, { lily: buildLily(world, o) }));
   const heat = el('circle', { cx: 975, cy: 470, r: 80, fill: 'url(#g-glow-gold)', opacity: 0 }, world);
-  const camK = [[53.15, [960, 610, 1.0, 0]], [54.5, [966, 560, 1.12, 0.004]], [55.35, [975, 472, 5.6, 0.01]]];
+  const camK = [[53.15, [960, 610, 1.0, 0]], [54.5, [966, 560, 1.12, 0.004]], [55.35, [966, 560, 1.12, 0.004]]];
   const camAt = t => { const c = camSpl(t, camK); return cam(c[0], c[1], c[2], c[3]); };
   s.update = t => {
     world.setAttribute('transform', M.str(camAt(t)));
@@ -120,14 +113,7 @@ function buildS11b(L) {
     sun.setAttribute('opacity', (0.75 + 0.25 * E.sine(prog(t, 53.2, 55))).toFixed(3));
     const gp = prog(t, 53.4, 54.3);
     groundGlow.setAttribute('opacity', (Math.sin(Math.PI * gp) * 0.9).toFixed(3));
-    flowers.forEach(f => {
-      const grow = E.out2(prog(t, f.at, f.at + 0.55));
-      const bloom = prog(t, f.at + 0.45, f.at + 1.05);
-      f.lily.update(grow, bloom);
-    });
-    const hk = E.in2(prog(t, 54.75, 55.3));
-    heat.setAttribute('opacity', clamp(hk * 1.2).toFixed(3));
-    heat.setAttribute('r', r1(60 + 260 * hk));
+    heat.setAttribute('opacity','0');
   };
   s.fx = (ctx, t) => {
     const m = camAt(t);
@@ -235,7 +221,7 @@ function buildS12a(L) {
 /* ============================ S12b 窗台上的铜元 ============================ */
 const S12 = { coin: [1195, 744], coinR: 30 };
 function buildS12b(L) {
-  const s = addScene({ name: 'S12b', t0: 56.7, t1: T.END + 1, roots: [L.s12b] });
+  const s = addScene({ name: 'S12b', t0: 54.8, t1: T.END + 1, roots: [L.s12b] });
   const w = G(L.s12b);
   // 天与崖
   lgrad('g-t-sky', [[0, '#f8e2b8'], [1, '#eab47a']]);
@@ -302,16 +288,12 @@ function buildS12b(L) {
   el('path', { d: `M${cx - R},1010L${cx - R},${sy}A${R},${R} 0 0 1 ${cx + R},${sy}L${cx + R - 60},${sy}A${R - 60},${R - 60} 0 0 0 ${cx - R + 60},${sy}L${cx - R + 60},1010Z`, fill: 'url(#g-t-archsh)' }, w);
   // 碗（洗净还回）与铜元
   buildBowl(w, { x: 1112, y: 725, s: 0.3, clean: true });
-  const coin = G(w, { transform: `translate(${S12.coin[0]},${S12.coin[1]}) rotate(-6)` });
-  softEllipse(coin, -12, 30, 32, 8, 0.45);
-  rgrad('g-coin', [[0, '#e8a672'], [0.6, '#b8683a'], [0.9, '#8a4622'], [1, '#4e2410']], { cx: 0.62, cy: 0.35, r: 0.8 });
-  el('circle', { r: S12.coinR, fill: 'url(#g-coin)' }, coin);
-  starRelief(coin, 0, 0, 17.3, [[0, '#4a2412'], [0.5, '#a0582e'], [1, '#f6c08c']]);
-  el('circle', { r: 27.2, fill: 'none', stroke: '#f0b07a', 'stroke-width': 0.9, opacity: 0.6 }, coin);
-  el('circle', { r: 26.1, fill: 'none', stroke: '#4a2412', 'stroke-width': 0.5, opacity: 0.6 }, coin);
-  el('circle', { r: S12.coinR, fill: 'url(#pat-grit)', opacity: 0.25, transform: 'scale(0.06)' }, coin);
-  const coinGlint = el('circle', { r: S12.coinR, fill: 'url(#g-coin-glint)', opacity: 0 }, coin);
-  rgrad('g-coin-glint', [[0, '#fff6dc', 0.9], [0.3, '#ffe0a8', 0.3], [1, '#ffe0a8', 0]], { cx: 0.7, cy: 0.3, r: 0.5 });
+  const ration=G(w,{transform:'translate(1355,768)'});
+  softEllipse(ration,0,4,78,12,.4);
+  el('path',{d:'M-64,0C-82,-28 -72,-80 -20,-115L20,-115C72,-80 82,-28 64,0Z',fill:'#8b806c',stroke:'#4d4335','stroke-width':3},ration);
+  el('path',{d:'M-20,-115L-32,-132 -7,-125 3,-138 28,-128 20,-115',fill:'#a99c82',stroke:'#4d4335','stroke-width':2},ration);
+  el('path',{d:'M-25,-112Q0,-105 25,-112M-13,-106Q-30,-78 -40,-42M12,-106Q30,-78 40,-42',fill:'none',stroke:'#5b4d39','stroke-width':3},ration);
+  el('path',{d:'M-64,0C-82,-28 -72,-80 -20,-115L20,-115C72,-80 82,-28 64,0Z',fill:'url(#pat-grit)',opacity:.35},ration);
   // 水缸 + 扁担 + 水桶
   const vat = G(w);
   softEllipse(vat, 330, 1012, 220, 34, 0.4);
@@ -365,15 +347,12 @@ function buildS12b(L) {
   rgrad('g-t-sun', [[0, '#fff2cc', 0.85], [0.25, '#ffd08a', 0.35], [1, '#ffb060', 0]]);
   el('circle', { cx: 2150, cy: -180, r: 900, fill: 'url(#g-t-sun)', style: 'mix-blend-mode:screen' }, w);
 
-  const s0 = 260 / S12.coinR;
-  const camK = [[56.7, [S12.coin[0], S12.coin[1], s0, 0]], [57.35, [S12.coin[0] - 6, S12.coin[1] - 2, s0 * 0.86, 0]], [60.4, [1010, 482, 0.945, 0]]];
-  const camAt = t => { const c = camSpl(t, camK); const d = drift(t, prog(t, 57.4, 58.5), 61); return cam(c[0] + d[0] / c[2], c[1] + d[1] / c[2], c[2], c[3] + d[2]); };
+  const camK = [[54.8,[1250,718,2.1,0]],[56.0,[1250,718,2.1,0]],[60.4,[1010,550,.945,0]]];
+  const camAt=t=>{const c=camSpl(t,camK);return cam(c[0],c[1],c[2],c[3]);};
   S12.camAt = camAt;
   s.update = t => {
     w.setAttribute('transform', M.str(camAt(t)));
-    vis(L.s12b, E.sine(prog(t, 56.75, 57.2)));
-    const gk = prog(t, 57.15, 57.75);
-    coinGlint.setAttribute('opacity', (Math.sin(Math.PI * gk) * 0.9).toFixed(3));
+    vis(L.s12b, E.sine(prog(t, 54.8, 55.65)));
     rays.setAttribute('opacity', (0.5 + 0.5 * E.sine(prog(t, 57.5, 59.5)) + 0.08 * Math.sin(t * 1.3)).toFixed(3));
   };
   s.fx = (ctx, t) => {
@@ -390,4 +369,4 @@ function buildS12b(L) {
   s.slots = [];
   return s;
 }
-function buildS12(L) { buildS12a(L); buildS12b(L); }
+function buildS12(L) { buildS12b(L); }
