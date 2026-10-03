@@ -67,6 +67,48 @@ S1.camAt = t => {
   return cam(c[0] + d[0] / c[2], c[1] + d[1] / c[2], c[2], c[3] + d[2]);
 };
 
+// 仅两张旧桌面的顺纹：保留木色与少量细纹，避免等距年轮变成横向排线。
+// 长短不一的磨痕/纤维属于桌面坐标，随原相机移动；不改变共享木纹。
+function buildWornTabletop(parent, x, y, width, height, id) {
+  const surface = G(parent, { 'data-material': 'worn-tabletop' });
+  el('rect', { x, y, width, height, fill: '#654327' }, surface);
+  el('rect', { x, y, width, height, fill: 'url(#pat-wood)', opacity: 0.34 }, surface);
+  el('rect', { x, y, width, height }, el('clipPath', { id }, DEFS));
+  const grain = G(surface, { 'clip-path': `url(#${id})` });
+  const local = G(grain, { transform: `translate(${x},${y}) scale(${width / 3520},${height / 1400})` });
+  for (const [d, color, alpha] of [
+    ['M120,113Q438,94 770,110T1360,102L1337,120Q982,119 750,126T120,122Z', '#b07e48', .14],
+    ['M1480,249Q1800,224 2048,239T2860,233L2790,252Q2440,245 2070,257T1480,260Z', '#302111', .16],
+    ['M530,503Q775,466 1100,482T1790,474L1720,501Q1305,505 1100,505T530,521Z', '#b07e48', .13],
+    ['M1900,724Q2116,700 2390,717T3260,706L3208,727Q2780,743 2420,737T1900,738Z', '#322012', .15],
+    ['M60,959Q418,938 739,951T1370,946L1320,962Q964,975 739,968T60,976Z', '#b07e48', .12],
+    ['M1350,1150Q1665,1124 1970,1144T2730,1136L2660,1156Q2290,1170 1980,1165T1350,1168Z', '#302111', .14]
+  ]) el('path', { d, fill: color, opacity: alpha }, local);
+  const fibers = [
+    'M180,57Q469,49 630,60T1160,54',
+    'M1260,149Q1580,129 1712,143T2100,138M1700,143Q1800,158 1970,151',
+    'M2430,92Q2670,101 2800,87T3330,97',
+    'M490,281Q686,273 805,285T1330,278',
+    'M1520,342Q1770,352 1994,337T2610,346M1972,339Q2060,327 2180,331',
+    'M55,419Q273,409 420,419T820,414',
+    'M960,558Q1170,546 1330,554T1890,550',
+    'M2230,472Q2460,461 2720,476T3350,467',
+    'M250,653Q546,667 762,652T1210,663M744,654Q891,642 986,650',
+    'M1320,765Q1540,749 1780,764T2230,757',
+    'M2530,866Q2730,853 2928,865T3410,859',
+    'M380,870Q573,856 740,865T1110,861',
+    'M1140,1019Q1390,1030 1610,1013T2200,1021M1590,1015Q1700,1003 1805,1006',
+    'M100,1216Q355,1200 632,1217T1170,1208',
+    'M2390,1064Q2670,1051 2940,1061T3370,1055',
+    'M1500,1292Q1750,1300 1940,1287T2570,1294'
+  ];
+  for (let i = 0; i < fibers.length; i++) {
+    el('path', { d: fibers[i], fill: 'none', stroke: '#302010', 'stroke-width': i % 3 === 0 ? 4.5 : 2.8, opacity: .25, 'stroke-linecap': 'round' }, local);
+  }
+  el('path', { d: 'M460,188Q623,182 776,186M1100,391Q1280,387 1450,393M2020,597Q2190,586 2370,591M500,733Q666,728 840,737M1840,907Q1990,898 2150,904M2840,1211Q3000,1203 3140,1207', fill: 'none', stroke: '#c29259', 'stroke-width': 2.3, opacity: .12, 'stroke-linecap': 'round' }, local);
+  return surface;
+}
+
 function buildS1(L) {
   const s = addScene({ name: 'S1', t0: 0, t1: 7.42, roots: [L.s1, L.s1o] });
   const world = G(L.s1);
@@ -74,8 +116,23 @@ function buildS1(L) {
   // 墙
   lgrad('g-s1-wall', [[0, '#3a2a1e'], [0.4, '#6e5139'], [0.75, '#62472f'], [1, '#4c3625']]);
   el('rect', { x: -400, y: -400, width: 2720, height: 1900, fill: 'url(#g-s1-wall)' }, world);
-  el('rect', { x: -400, y: -400, width: 2720, height: 1900, fill: 'url(#pat-grit-l)', opacity: 0.6 }, world);
-  el('rect', { x: -400, y: -400, width: 2720, height: 1900, fill: 'url(#pat-grit)', opacity: 0.35 }, world);
+  el('rect', { x: -400, y: -400, width: 2720, height: 1900, fill: 'url(#pat-grit-l)', opacity: 0.32 }, world);
+  el('rect', { x: -400, y: -400, width: 2720, height: 1900, fill: 'url(#pat-grit)', opacity: 0.17 }, world);
+  // 黄土抹面：大块薄抹痕、沿墙脚积灰与少量露出的麦秸均属于墙面。
+  const earth = G(world, { 'data-material': 'earthen-plaster' });
+  const earthClip=uid('wall-earth');
+  el('rect',{x:-400,y:-400,width:2720,height:1196},el('clipPath',{id:earthClip},DEFS));
+  earth.setAttribute('clip-path',`url(#${earthClip})`);
+  for(const [d,color,alpha] of [
+    ['M-240,207Q87,150 260,236T679,205L756,274Q481,319 290,280T-230,300Z','#a48762',.10],
+    ['M-30,435Q168,350 405,408T875,409L853,463Q627,447 401,464T-30,479Z','#c1a17a',.09],
+    ['M241,102Q458,60 671,99L723,157Q573,150 384,174L270,153Z','#3b291b',.11],
+    ['M72,556Q279,504 481,549T863,548L873,607Q642,585 472,606T65,617Z','#d5b389',.07],
+    ['M-190,704Q124,658 343,694T701,682L784,762Q506,742 297,771T-175,777Z','#251b13',.14]
+  ])el('path',{d,fill:color,opacity:alpha},earth);
+  el('path',{d:'M87,221Q175,207 256,228M320,244Q392,261 483,248M201,429Q283,413 367,426M550,453Q683,430 774,444M80,603Q228,568 358,595M435,705Q553,692 655,709',fill:'none',stroke:'#ceb089','stroke-width':2.2,opacity:.13,'stroke-linecap':'round'},earth);
+  el('path',{d:'M330,-12L323,46L335,86L328,115M327,47L306,60M176,682L180,716L171,735M180,716L193,723M742,227L729,254L734,274',fill:'none',stroke:'#352619','stroke-width':1.3,opacity:.32},earth);
+  el('path',{d:'M173,327l14,-4M252,496l9,3M403,195l17,-3M452,374l10,4M583,518l13,-4M685,301l8,4M149,624l11,-3M334,655l14,2M790,484l10,-4',fill:'none',stroke:'#d1b789','stroke-width':1.5,opacity:.26},earth);
   // 窗洞进深
   const wcx = 1310, wsy = 400, wR = 350, wsill = 770;
   el('path', { d: `M${wcx - wR - 34},${wsill + 10}L${wcx - wR - 34},${wsy}A${wR + 34},${wR + 34} 0 0 1 ${wcx + wR + 34},${wsy}L${wcx + wR + 34},${wsill + 10}Z`, fill: '#241810' }, world);
@@ -85,7 +142,7 @@ function buildS1(L) {
   el('rect', { x: wcx - wR - 50, y: wsill, width: 2 * wR + 100, height: 4, fill: '#9a7552', opacity: 0.6 }, world);
   // 炕桌
   lgrad('g-s1-tabv', [[0, '#000', 0.55], [0.12, '#000', 0.1], [1, '#000', 0.5]]);
-  el('rect', { x: -400, y: 800, width: 2720, height: 700, fill: 'url(#pat-wood)' }, world);
+  buildWornTabletop(world, -400, 800, 2720, 700, 'cp-s1-tablegrain');
   el('rect', { x: -400, y: 800, width: 2720, height: 700, fill: 'url(#g-s1-tabv)' }, world);
   el('rect', { x: -400, y: 796, width: 2720, height: 8, fill: '#0e0805', opacity: 0.8 }, world);
   el('rect', { x: -400, y: 804, width: 2720, height: 3, fill: '#c38d5a', opacity: 0.35 }, world);
@@ -141,10 +198,16 @@ function buildS1(L) {
   el('rect', { x: wn.x, y: wn.y, width: wn.w, height: wn.h }, el('clipPath', { id: cpId }, DEFS));
   const picFx = G(po, { 'clip-path': `url(#${cpId})` });
   // 人像素材位（为空时显示照片里的黄土风景，即 S2）
+  // 有插画时，以相框内的暖旧纸接住人像渐隐，再让贫苦农家浮现。
+  // 纸只遮挡原素材窗口；空素材分支不建立纸层，保留原风景推进。
+  const portraitPaper = MATERIALS.li ? el('rect', {
+    x: wn.x, y: wn.y, width: wn.w, height: wn.h, fill: '#c4b08b',
+    'data-material': 'portrait-handoff-paper'
+  }, picFx) : null;
   const portrait = G(picFx, { style: 'isolation:isolate' });
   let portraitImg = null;
   if (MATERIALS.li) {
-    portraitImg = el('image', { href: MATERIALS.li, x: wn.x, y: wn.y, width: wn.w, height: wn.h, preserveAspectRatio: 'xMidYMid slice', style: 'filter:grayscale(1) contrast(1.06) brightness(1.02)' }, portrait);
+    portraitImg = el('image', { href: MATERIALS.li, x: wn.x, y: wn.y, width: wn.w, height: wn.h, preserveAspectRatio: 'xMidYMid meet', style: 'filter:grayscale(1) contrast(1.06) brightness(1.02)' }, portrait);
     el('rect', { x: wn.x, y: wn.y, width: wn.w, height: wn.h, fill: '#cac8c3', style: 'mix-blend-mode:color', opacity: 0.12 }, portrait);
   }
   rgrad('g-s1-picvig', [[0, '#1a0f06', 0], [0.6, '#1a0f06', 0.12], [1, '#1a0f06', 0.7]], { r: 0.72 });
@@ -157,7 +220,23 @@ function buildS1(L) {
   const mat = G(po);
   lgrad('g-s1-frame', [[0, '#8a5c34'], [0.3, '#4a2e18'], [1, '#26170c']], { x1: 0, y1: 0, x2: 1, y2: 1 });
   el('path', { d: `M-150,-195h300v390h-300ZM-134,-179v358h268v-358Z`, fill: 'url(#g-s1-frame)', 'fill-rule': 'evenodd' }, mat);
-  el('path', { d: `M-150,-195h300v390h-300ZM-134,-179v358h268v-358Z`, fill: 'url(#pat-wood)', 'fill-rule': 'evenodd', opacity: 0.35 }, mat);
+  // 相框的四根木料各自沿长度走纹；接角、内沿与擦亮处仍被原框形裁切。
+  const frameClip=uid('photo-wood');
+  el('path',{d:'M-150,-195h300v390h-300ZM-134,-179v358h268v-358Z','clip-rule':'evenodd'},el('clipPath',{id:frameClip},DEFS));
+  const frameWood=G(mat,{'clip-path':`url(#${frameClip})`,'data-material':'directional-frame-wood'});
+  for(const side of [-1,1]){
+    const piece=G(frameWood,{transform:`translate(${side*142},0)`});
+    el('path',{d:'M-7,-178C-4,-125 -9,-66 -5,-16S-7,91 -4,179M-2,-188C2,-112 -3,-64 0,-18S-2,93 1,189M5,-185C1,-104 7,-52 4,-8S6,102 4,184',stroke:'#d29b63','stroke-width':.8,opacity:.27,fill:'none'},piece);
+    el('path',{d:'M-4,-181C-1,-119 -6,-54 -3,-7S-4,107 -1,188M3,-167C0,-96 4,-42 2,20S4,123 2,173',stroke:'#180e08','stroke-width':1.2,opacity:.48,fill:'none'},piece);
+    el('path',{d:'M0,52C-6,66 -6,92 0,110C4,88 5,67 0,52ZM0,70Q-2,82 0,91',stroke:'#211208','stroke-width':.65,opacity:.4,fill:'none'},piece);
+  }
+  for(const y of [-187,187]){
+    el('path',{d:`M-149,${y-4}C-84,${y-7} -3,${y+2} 149,${y-4}M-142,${y+2}Q-14,${y-1} 148,${y+4}`,stroke:'#c08d58','stroke-width':.8,opacity:.29,fill:'none'},frameWood);
+    el('path',{d:`M-148,${y-1}Q-14,${y+3} 151,${y-1}`,stroke:'#1a0f08','stroke-width':1.4,opacity:.5,fill:'none'},frameWood);
+  }
+  el('path',{d:'M-150,-195L-134,-179M150,-195L134,-179M-150,195L-134,179M150,195L134,179',stroke:'#170c06','stroke-width':1.2,opacity:.7,fill:'none'},frameWood);
+  el('path',{d:'M-148,189V-192H142M-132,177V-177H131',stroke:'#d4a16e','stroke-width':1,opacity:.38,fill:'none'},frameWood);
+  el('path',{d:'M-144,-111v32M-143,38v27M-84,-190l29,1M48,192h25',stroke:'#e0bd88','stroke-width':1,opacity:.32,fill:'none'},frameWood);
   el('path', { d: `M-134,-179h268v358h-268Z M${wn.x},${wn.y}v${wn.h}h${wn.w}v${-wn.h}Z`, fill: '#e6d7b8', 'fill-rule': 'evenodd' }, mat);
   el('path', { d: `M-134,-179h268v358h-268Z M${wn.x},${wn.y}v${wn.h}h${wn.w}v${-wn.h}Z`, fill: 'url(#pat-paper)', 'fill-rule': 'evenodd', opacity: 0.8 }, mat);
   el('rect', { x: wn.x - 2, y: wn.y - 2, width: wn.w + 4, height: wn.h + 4, fill: 'none', stroke: '#a08058', 'stroke-width': 1.2, opacity: 0.8 }, mat);
@@ -196,7 +275,10 @@ function buildS1(L) {
     vis(mat, 1 - E.io2(prog(t, 6.7, 7.05)));
     vis(photoDark, 0.92 * (1 - E.out2(prog(t, 0.3, 1.6))));
     glare.setAttribute('opacity', (1 - prog(t, 6.3, 6.8)).toFixed(3));
-    if (portraitImg) vis(portrait, 1 - E.sine(prog(t, 6.0, 6.85)));
+    if (portraitImg) {
+      vis(portrait, 1 - E.sine(prog(t, 6.0, 6.4)));
+      vis(portraitPaper, t <= 6.0 ? 0 : 1 - E.sine(prog(t, 6.35, 6.85)));
+    }
     glare.setAttribute('x', r1(-134 + (t - 3) * 14));
   };
   s.fx = (ctx, t) => {
@@ -264,8 +346,8 @@ function buildS2(L) {
     return smooth(pts) + 'L2600,1500L-600,1500Z';
   };
   el('path', { d: ridge(470, 40, 1), fill: '#bca47e' }, world);
-  lgrad('g-s2-haze', [[0, '#e0cca6', 0.55], [1, '#e0cca6', 0]]);
-  el('rect', { x: -600, y: 380, width: 3200, height: 160, fill: 'url(#g-s2-haze)' }, world);
+  lgrad('g-s2-haze', [[0, '#e0cca6', 0], [0.46, '#e0cca6', 0.34], [1, '#e0cca6', 0]]);
+  el('path', { d: 'M-600,286Q340,307 1070,276T2600,306L2600,609Q1730,568 1050,602T-600,586Z', fill: 'url(#g-s2-haze)' }, world);
   el('path', { d: ridge(545, 55, 4), fill: '#a98e67' }, world);
   const tl = G(world, { opacity: 0.12, stroke: '#4b3824', 'stroke-width': 1.5, fill: 'none' });
   for (let k = 0; k < 7; k++) {
@@ -284,6 +366,10 @@ function buildS2(L) {
       for (let i = 0; i < n; i++) branch(x2, y2, a + (TR() - 0.5) * 1.1 + (i - (n - 1) / 2) * 0.5, len * (0.62 + TR() * 0.15), w * 0.62, depth - 1);
     }
   };
+  // 根颈延伸至远坡表面；根、土脊与接触阴影相互覆盖，保留树冠和原枝形。
+  el('path',{d:'M388,587Q411,577 428,580T463,587Q425,595 386,591Z',fill:'#776446',opacity:.5},tree);
+  el('path',{d:'M417,550Q422,568 414,580L398,590L416,585L425,576L436,584L453,590L441,580L427,567L424,551Z',fill:'#4d3d2c'},tree);
+  el('path',{d:'M410,588Q424,582 438,588M395,591Q418,589 426,590',stroke:'#bfaa80','stroke-width':2,fill:'none',opacity:.7},tree);
   branch(420, 560, -Math.PI / 2 - 0.08, 95, 11, 5);
   // 近处山体与窑洞
   lgrad('g-s2-cliff', [[0, '#b1906a'], [1, '#8d6c4a']]);
@@ -384,5 +470,5 @@ function buildS2(L) {
 
 /* 契约画布（程序生成，供 S2 与 S8 共用） */
 let _deedCanvas = null, _deedURL = null;
-function DEED_CANVAS() { if (!_deedCanvas) _deedCanvas = drawContract(1000, 700, 31); return _deedCanvas; }
+function DEED_CANVAS() { if (!_deedCanvas) _deedCanvas = drawDebtPaperMaterial(1000, 700, 31); return _deedCanvas; }
 function DEED_URL() { if (!_deedURL) _deedURL = DEED_CANVAS().toDataURL('image/png'); return _deedURL; }

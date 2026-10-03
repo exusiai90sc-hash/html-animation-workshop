@@ -55,20 +55,32 @@ function buildFlame(parent, o = {}) {
 function buildLamp(parent, x, y, sc = 1) {
   const g0 = G(parent, { transform: `translate(${x},${y}) scale(${sc})` });
   const id = uid('lamp');
-  lgrad(id + '-col', [[0, '#1d120a'], [0.28, '#5c3a20'], [0.42, '#8f5f36'], [0.55, '#6b4526'], [0.8, '#3a2413'], [1, '#170e07']], { x1: 0, y1: 0, x2: 1, y2: 0 });
-  lgrad(id + '-top', [[0, '#a4713f'], [1, '#4e3219']]);
-  rgrad(id + '-oil', [[0, '#ffe9b0', 0.95], [0.12, '#a36c33'], [0.5, '#3d2410'], [1, '#170d06']], { cx: 0.74, cy: 0.35, r: 0.8 });
+  // 旧灯台的暗哑表面与盏中油面分开着色，火光只留下窄的暖反射。
+  lgrad(id + '-col', [[0, '#131811'], [0.17, '#30392b'], [0.29, '#66634a'], [0.38, '#ac9469'], [0.45, '#60583f'], [0.65, '#343b2b'], [0.84, '#20291d'], [1, '#111810']], { x1: 0, y1: 0, x2: 1, y2: 0 });
+  lgrad(id + '-top', [[0, '#766c48'], [0.4, '#4a4c33'], [1, '#292f22']]);
+  rgrad(id + '-oil', [[0, '#c7a15b'], [0.15, '#665329'], [0.48, '#292811'], [1, '#101609']], { cx: 0.77, cy: 0.37, r: 0.75 });
   softEllipse(g0, 70, 10, 170, 28, 0.5);
   el('path', { d: 'M-66,0C-66,11 -58,18 -44,19L44,19C58,18 66,11 66,0Z', fill: `url(#${id}-col)` }, g0);
   el('ellipse', { cx: 0, cy: 0, rx: 66, ry: 13, fill: `url(#${id}-top)` }, g0);
-  el('ellipse', { cx: 0, cy: 0, rx: 66, ry: 13, fill: 'url(#pat-grit)', opacity: 0.35 }, g0);
+  el('ellipse', { cx: 0, cy: 0, rx: 66, ry: 13, fill: 'url(#pat-grit)', opacity: 0.2 }, g0);
+  el('path', { d: 'M-61,4C-48,16 39,19 60,7', fill:'none', stroke:'#b0a070', 'stroke-width':1.4, opacity:.35 }, g0);
   const prof = [[16, -3], [18, -11], [13, -21], [21, -38], [22, -52], [14, -70], [9, -88], [10, -100], [17, -112], [15, -124], [8, -134], [8, -146], [17, -153]];
   const pts = prof.concat(prof.slice().reverse().map(p => [-p[0], p[1]]));
-  el('path', { d: smooth(pts, true, 0.7), fill: `url(#${id}-col)` }, g0);
+  const stemD = smooth(pts, true, 0.7);
+  el('path', { d: stemD, fill: `url(#${id}-col)` }, g0);
+  const stemClip = uid('lamp-stem');
+  el('path',{d:stemD},el('clipPath',{id:stemClip},DEFS));
+  const stemMarks = G(g0,{'clip-path':`url(#${stemClip})`});
+  el('path',{d:'M-18,-17C-4,-28 -20,-44 -9,-64S-10,-98 -6,-124L0,-152L-25,-150Z',fill:'#7d8765',opacity:.16},stemMarks);
+  el('path',{d:'M3,-5C-7,-25 8,-31 1,-45S-8,-61 -2,-73M-4,-96Q0,-103 -6,-114',stroke:'#cec09c','stroke-width':1.1,fill:'none',opacity:.23},stemMarks);
+  el('path',{d:'M-18,-37Q2,-30 22,-39M-11,-100Q2,-94 12,-101M-13,-123Q0,-118 15,-125',stroke:'#10170f','stroke-width':1.4,fill:'none',opacity:.5},stemMarks);
   el('path', { d: 'M-54,-166C-48,-145 48,-145 54,-166Z', fill: `url(#${id}-col)` }, g0);
-  el('ellipse', { cx: 0, cy: -166, rx: 54, ry: 11.5, fill: '#24160c' }, g0);
+  el('ellipse', { cx: 0, cy: -166, rx: 54, ry: 11.5, fill: '#12170d' }, g0);
   el('ellipse', { cx: 2, cy: -165, rx: 45, ry: 7.8, fill: `url(#${id}-oil)` }, g0);
-  el('path', { d: 'M-54,-166A54,11.5 0 0 0 54,-166', fill: 'none', stroke: '#d9a364', 'stroke-width': 2.4, opacity: 0.8 }, g0);
+  el('path', { d:'M-38,-164C-21,-158 15,-158 34,-163M-22,-166Q1,-169 23,-166', fill:'none', stroke:'#bda576', 'stroke-width':.85, opacity:.4 },g0);
+  el('path', { d:'M25,-171Q36,-173 47,-167L47,-160Q37,-157 23,-160Z',fill:'#0f1009',opacity:.6 },g0);
+  el('path', { d: 'M-54,-166A54,11.5 0 0 0 54,-166', fill: 'none', stroke: '#d7ba85', 'stroke-width': 1.8, opacity: 0.7 }, g0);
+  el('path', { d:'M-49,-164Q-38,-158 -27,-158M5,-155Q19,-155 27,-158',fill:'none',stroke:'#e9d3a5','stroke-width':.7,opacity:.5 },g0);
   el('path', { d: 'M24,-166C32,-169 37,-173 41,-181', fill: 'none', stroke: '#1b110a', 'stroke-width': 4.5, 'stroke-linecap': 'round' }, g0);
   el('circle', { cx: 41, cy: -182, r: 2.6, fill: '#ffab52' }, g0);
   return { g: g0, tip: [x + 41 * sc, y - 184 * sc] };
@@ -138,31 +150,46 @@ function buildBowl(parent, o) {
   const id = uid('bowl');
   const rx = 200, ry = 56, dp = 150;
   lgrad(id + '-out', o.clean ?
-    [[0, '#3a2112'], [0.16, '#7a4c2a'], [0.28, '#b07a4a'], [0.36, '#83532e'], [0.7, '#4f2e18'], [1, '#26150a']] :
-    [[0, '#2e1c10'], [0.16, '#62432a'], [0.28, '#86623f'], [0.38, '#644227'], [0.75, '#3e2716'], [1, '#1f130a']],
+    [[0, '#30352c'], [0.16, '#777b68'], [0.28, '#b1b19a'], [0.38, '#777c6a'], [0.72, '#484f42'], [1, '#272e24']] :
+    [[0, '#252c23'], [0.16, '#626955'], [0.28, '#929a7f'], [0.38, '#626c58'], [0.75, '#394533'], [1, '#20281e']],
   { x1: 0, y1: 0, x2: 1, y2: 0 });
   lgrad(id + '-vd', [[0, '#000', 0], [0.55, '#000', 0.12], [1, '#000', 0.5]]);
   rgrad(id + '-in', o.clean ?
-    [[0, '#c08a58'], [0.55, '#7c4c2a'], [1, '#3a2010']] :
-    [[0, '#9c7651'], [0.55, '#634329'], [1, '#2f1d10']],
+    [[0, '#c3c4a8'], [0.55, '#858f75'], [1, '#353f2f']] :
+    [[0, '#a9b093'], [0.55, '#6c795f'], [1, '#303d2b']],
   { cx: 0.55, cy: 0.62, r: 0.62 });
   softEllipse(b, 18, dp + 12, 196, 38, 0.6);
   const outer = `M${-rx},0A${rx},${ry} 0 0 0 ${rx},0C${rx - 4},${dp * 0.55} ${rx * 0.62},${dp * 0.97} ${rx * 0.34},${dp}L${-rx * 0.34},${dp}C${-rx * 0.62},${dp * 0.97} ${-rx + 4},${dp * 0.55} ${-rx},0Z`;
-  el('path', { d: `M${-rx * 0.33},${dp - 3}L${rx * 0.33},${dp - 3}L${rx * 0.31},${dp + 13}L${-rx * 0.31},${dp + 13}Z`, fill: o.clean ? '#9a7450' : '#7d6044' }, b);
+  el('path', { d: `M${-rx * 0.33},${dp - 3}L${rx * 0.33},${dp - 3}L${rx * 0.31},${dp + 13}L${-rx * 0.31},${dp + 13}Z`, fill: o.clean ? '#aa9379' : '#90775c' }, b);
   el('path', { d: outer, fill: `url(#${id}-out)` }, b);
   el('path', { d: outer, fill: `url(#${id}-vd)` }, b);
-  el('path', { d: outer, fill: 'url(#pat-grit)', opacity: o.clean ? 0.18 : 0.38 }, b);
+  el('path', { d: outer, fill: 'url(#pat-grit)', opacity: o.clean ? 0.09 : 0.15 }, b);
+  const glazeClip=uid('bowl-glaze');el('path',{d:outer},el('clipPath',{id:glazeClip},DEFS));
+  const glaze=G(b,{'clip-path':`url(#${glazeClip})`});
+  // 薄釉不均与露胎沿着器壁，避免把碗画成整块木料。
+  el('path',{d:'M-193,17C-174,48 -183,83 -159,106C-146,122 -120,133 -89,140L-65,153L-200,167Z',fill:'#aa9377',opacity:o.clean?.25:.31},glaze);
+  el('path',{d:'M-130,18C-122,44 -135,81 -119,108C-111,122 -94,128 -91,141M-8,40C1,64 -13,103 -3,137M132,18C142,37 133,73 148,91',fill:'none',stroke:'#b8bea4','stroke-width':7,opacity:o.clean?.09:.07},glaze);
+  el('path',{d:'M-122,146Q-45,130 36,145T137,136L170,165L-154,165Z',fill:'#8e785c',opacity:.45},glaze);
+  // 成形与烧成留下的局部釉斑、细孔，不另叠全幅噪点。
+  el('path',{d:'M-181,56Q-164,82 -137,89M-162,91Q-137,114 -104,119M-70,94Q-24,106 29,104M44,126Q85,122 112,106',fill:'none',stroke:'#ccd0b5','stroke-width':.9,opacity:.15},glaze);
+  el('path',{d:'M-92,58Q-63,67 -34,66L-24,85Q-61,82 -81,73ZM65,65Q95,56 122,44L116,66Q92,77 70,80Z',fill:'#253827',opacity:.12},glaze);
+  for(const [px,py,rr] of [[-168,63,.75],[-147,93,1],[-135,65,.65],[-95,110,.8],[-52,78,.55],[-42,106,.7],[4,115,.85],[23,91,.55],[56,121,.65],[106,76,.9],[125,55,.7],[140,77,.5]]) {
+    el('ellipse',{cx:px,cy:py,rx:rr,ry:rr*.65,fill:'#20291e',opacity:.38},glaze);
+    el('path',{d:`M${px-rr},${py+.8}h${rr*1.4}`,stroke:'#bdc1a7','stroke-width':.4,opacity:.3},glaze);
+  }
   // 高光
-  softStroke(b, `M${-rx * 0.66},${ry * 0.7}C${-rx * 0.62},${dp * 0.55} ${-rx * 0.5},${dp * 0.78} ${-rx * 0.4},${dp * 0.86}`, '#fff', 7, o.clean ? 0.3 : 0.14);
+  softStroke(b, `M${-rx * 0.66},${ry * 0.7}C${-rx * 0.62},${dp * 0.55} ${-rx * 0.5},${dp * 0.78} ${-rx * 0.4},${dp * 0.86}`, '#f2f4dc', 12, o.clean ? 0.28 : 0.16);
+  el('path',{d:'M-130,44Q-125,78 -113,94',stroke:'#edeed4','stroke-width':2.1,fill:'none',opacity:o.clean?.48:.31},b);
   el('ellipse', { cx: 0, cy: 0, rx, ry, fill: `url(#${id}-in)` }, b);
-  el('ellipse', { cx: 0, cy: 0, rx, ry, fill: 'url(#pat-grit)', opacity: 0.25 }, b);
+  el('ellipse', { cx: 0, cy: 0, rx, ry, fill: 'url(#pat-grit)', opacity: 0.12 }, b);
+  el('path',{d:'M-138,-18C-74,-39 64,-35 128,-19',fill:'none',stroke:'#d4d6b8','stroke-width':1.6,opacity:o.clean?.35:.16},b);
   softStroke(b, `M${-rx + 8},4A${rx - 8},${ry - 6} 0 0 0 ${rx - 8},4`, '#000', 10, 0.35);
-  el('ellipse', { cx: 0, cy: 0, rx, ry, fill: 'none', stroke: o.clean ? '#d8b089' : '#bf9b72', 'stroke-width': 5 }, b);
-  el('path', { d: `M${-rx},0A${rx},${ry} 0 0 0 ${rx},0`, fill: 'none', stroke: '#f3dcc0', 'stroke-opacity': 0.35, 'stroke-width': 1.6 }, b);
+  el('ellipse', { cx: 0, cy: 0, rx, ry, fill: 'none', stroke: o.clean ? '#ceccb0' : '#b9b898', 'stroke-width': 5 }, b);
+  el('path', { d: `M${-rx},0A${rx},${ry} 0 0 0 ${rx},0`, fill: 'none', stroke: '#e7e4c7', 'stroke-opacity': 0.5, 'stroke-width': 1.5 }, b);
   const crackPts = [[70, 53], [76, 68], [72, 80], [81, 95], [78, 108], [88, 122], [85, 134], [95, 148]];
   if (o.cracked) {
     // 豁口
-    el('path', { d: 'M52,54.5Q60,47 70,53.5Q66,58 58,58Z', fill: '#2a190e' }, b);
+    el('path', { d: 'M52,54.5Q60,47 70,53.5Q66,58 58,58Z', fill: '#876e51' }, b);
     el('path', { d: poly(crackPts), fill: 'none', stroke: '#140b05', 'stroke-width': 2.6, 'stroke-linejoin': 'bevel' }, b);
     el('path', { d: poly(crackPts.map(p => [p[0] + 2, p[1]])), fill: 'none', stroke: '#e0c09a', 'stroke-width': 1, opacity: 0.4 }, b);
     el('path', { d: 'M70,52L66,40L69,30', fill: 'none', stroke: '#1d110a', 'stroke-width': 1.6, opacity: 0.75 }, b);
@@ -327,68 +354,127 @@ function buildCapFront(parent, o = {}) {
   const g0 = G(parent);
   const id = uid('cap');
   const star = CAPSTAR;
-  // 帽檐下的阴影
-  el('rect', { x: -2600, y: 770, width: 7200, height: 3000, fill: '#040404' }, g0);
+  const underBrimBackdrop = el('rect', { x: -2600, y: 770, width: 7200, height: 3000, fill: '#040404' }, g0);
   const crownD = 'M160,360L380,222L680,158L960,146L1240,158L1540,222L1760,360C1750,480 1700,620 1640,740Q960,786 280,740C220,620 170,480 160,360Z';
   const cp = uid('cp');
   el('path', { d: crownD }, el('clipPath', { id: cp }, DEFS));
   const cr = G(g0, { 'clip-path': `url(#${cp})` });
+  // 各裁片有自己的经纬走向；线的弧度随布面受力变化，不套整幅颗粒贴图。
   const panels = [
-    ['M100,300L380,222L450,770L200,800Z', '#3c4543'],
-    ['M380,222L680,158L700,790L450,770Z', '#56605d'],
-    ['M680,158L960,146L1240,158L1220,790L700,790Z', '#6c7774'],
-    ['M1240,158L1540,222L1470,770L1220,790Z', '#58625f'],
-    ['M1540,222L1820,300L1720,800L1470,770Z', '#3e4745'],
+    ['M100,300L380,222L450,770L200,800Z', '#434b47', '#343d3a', 180, 465, 24],
+    ['M380,222L680,158L700,790L450,770Z', '#626b64', '#46524b', 365, 720, 11],
+    ['M680,158L960,146L1240,158L1220,790L700,790Z', '#778076', '#56625a', 660, 1260, -5],
+    ['M1240,158L1540,222L1470,770L1220,790Z', '#667066', '#4b574f', 1200, 1560, -13],
+    ['M1540,222L1820,300L1720,800L1470,770Z', '#48544b', '#36413b', 1450, 1800, -25],
   ];
-  panels.forEach(([d, c]) => el('path', { d, fill: c }, cr));
-  lgrad(id + '-v', [[0, '#000', 0.05], [0.55, '#000', 0], [0.85, '#000', 0.12], [1, '#000', 0.4]]);
-  el('rect', { x: 0, y: 140, width: 1920, height: 660, fill: `url(#${id}-v)` }, cr);
-  el('rect', { x: 0, y: 140, width: 1920, height: 660, fill: 'url(#pat-weave)' }, cr);
-  el('rect', { x: 0, y: 140, width: 1920, height: 660, fill: 'url(#pat-grit-l)', opacity: 0.3 }, cr);
-  // 布料褶皱
-  [['M470,260C520,420 500,560 540,720', '#000', 0.18, 28], ['M800,190C780,300 830,380 800,520', '#fff', 0.06, 30], ['M1320,220C1300,360 1350,500 1330,700', '#000', 0.14, 26], ['M1600,300C1580,420 1600,560 1560,700', '#000', 0.2, 30], ['M1100,600C1050,640 950,660 850,650', '#000', 0.12, 22]]
-    .forEach(([d, c, a, w]) => softStroke(cr, d, c, w, a));
-  // 缝线
-  [[380, 222, 450, 770], [680, 158, 700, 790], [1240, 158, 1220, 790], [1540, 222, 1470, 770]].forEach(([x1, y1, x2, y2], i) => {
-    el('path', { d: `M${x1},${y1}L${x2},${y2}`, stroke: '#1d2322', 'stroke-width': 6, opacity: 0.6 }, cr);
-    const dx = i < 2 ? 9 : -9;
-    el('path', { d: `M${x1 + dx},${y1 + 8}L${x2 + dx},${y2}`, stroke: '#cdd6d2', 'stroke-width': 1.6, 'stroke-dasharray': '8 7', opacity: 0.22 }, cr);
+  panels.forEach(([d, light, dark, x0, x1, lean], i) => {
+    lgrad(`${id}-panel-${i}`, [[0, light], [0.52, mixHex(light, dark, 0.22)], [1, dark]], { x1: 0.12, y1: 0, x2: 0.86, y2: 1 });
+    const pc = uid('cp');
+    el('path', { d }, el('clipPath', { id: pc }, DEFS));
+    const cloth = G(cr, { 'clip-path': `url(#${pc})` });
+    el('path', { d, fill: `url(#${id}-panel-${i})` }, cloth);
+    let warp = '', weft = '';
+    for (let x = x0; x < x1; x += 4.6) {
+      const bow = 4 * Math.sin((x - x0) * 0.034 + i);
+      warp += `M${r1(x)},145C${r1(x + lean * 0.36 + bow)},330 ${r1(x + lean * 0.73 - bow)},575 ${r1(x + lean)},800`;
+    }
+    for (let y = 165; y < 800; y += 5.3) {
+      const sag = 3.6 + 5 * Math.sin((y - 140) / 660 * Math.PI), off = 2 * Math.sin(y * 0.039 + i);
+      weft += `M${x0},${r1(y)}Q${r1((x0 + x1) / 2)},${r1(y + sag)} ${x1},${r1(y + off)}`;
+    }
+    el('path', { d: warp, fill: 'none', stroke: '#d2d3b5', 'stroke-width': 0.64, opacity: 0.16 }, cloth);
+    el('path', { d: weft, fill: 'none', stroke: '#151f19', 'stroke-width': 0.64, opacity: 0.22 }, cloth);
+    // 少量粗纱节随纬线落在裁片中，避免均匀的石质颗粒。
+    let slubs = '';
+    for (let j = 0; j < 20; j++) {
+      const x = x0 + 20 + ((j * 61 + i * 27) % Math.max(32, x1 - x0 - 40));
+      const y = 200 + ((j * 83 + i * 35) % 520);
+      slubs += `M${r1(x)},${y}q${4 + j % 4},1 ${7 + j % 5},0`;
+    }
+    el('path', { d: slubs, fill: 'none', stroke: '#c2c6ae', 'stroke-width': 1, opacity: 0.19 }, cloth);
   });
-  // 帽顶棱边
-  el('path', { d: 'M160,360L380,222L680,158L960,146L1240,158L1540,222L1760,360', fill: 'none', stroke: '#aab6b2', 'stroke-width': 4, opacity: 0.45, 'stroke-linejoin': 'round' }, g0);
-  el('path', { d: 'M168,372L382,236L682,172L960,160L1238,172L1538,236L1752,372', fill: 'none', stroke: '#c9d2cf', 'stroke-width': 1.5, 'stroke-dasharray': '8 7', opacity: 0.25 }, g0);
-  // 帽墙
-  lgrad(id + '-band', [[0, '#3a4341'], [1, '#262d2c']]);
-  el('path', { d: 'M280,740Q960,786 1640,740L1654,800Q960,850 266,800Z', fill: `url(#${id}-band)` }, g0);
-  el('path', { d: 'M280,740Q960,786 1640,740L1654,800Q960,850 266,800Z', fill: 'url(#pat-weave)' }, g0);
-  el('path', { d: 'M284,752Q960,798 1636,752M270,790Q960,840 1650,790', fill: 'none', stroke: '#b9c3bf', 'stroke-width': 1.4, 'stroke-dasharray': '7 6', opacity: 0.25 }, g0);
-  softStroke(g0, 'M280,740Q960,786 1640,740', '#000', 10, 0.4);
-  // 帽檐
-  lgrad(id + '-brim', [[0, '#353d3b'], [0.35, '#232a29'], [1, '#0e1211']]);
+  lgrad(id + '-v', [[0, '#000', 0.03], [0.52, '#000', 0], [0.84, '#000', 0.08], [1, '#000', 0.3]]);
+  el('rect', { x: 0, y: 140, width: 1920, height: 660, fill: `url(#${id}-v)` }, cr);
+  // 受缝边牵引的长褶：宽而缓的阴影配窄的亮脊，均贴合原帽形。
+  [
+    ['M428,256C466,384 447,559 488,740', 24, 0.17, 8],
+    ['M681,178C712,272 713,336 723,394', 12, 0.14, 6],
+    ['M1255,187C1228,324 1269,510 1240,745', 22, 0.14, -9],
+    ['M1546,264C1520,396 1543,557 1493,736', 26, 0.19, -9],
+    ['M766,749C824,704 838,646 876,617', 17, 0.14, 7],
+    ['M1090,614C1144,672 1158,714 1220,756', 18, 0.11, -6],
+  ].forEach(([d, w, a, dx]) => {
+    softStroke(cr, d, '#101c16', w, a);
+    softStroke(cr, d, '#dce0c5', w * 0.43, a * 0.46, { transform: `translate(${dx},0)` });
+  });
+  // 缝口和小褶皱；高光留在缝脊，针脚沿面料方向。
+  [[380, 222, 450, 770], [680, 158, 700, 790], [1240, 158, 1220, 790], [1540, 222, 1470, 770]].forEach(([x1, y1, x2, y2], i) => {
+    const dx = i < 2 ? 7 : -7;
+    el('path', { d: `M${x1},${y1}L${x2},${y2}`, fill: 'none', stroke: '#152019', 'stroke-width': 4, opacity: 0.48 }, cr);
+    el('path', { d: `M${x1 + dx},${y1 + 8}L${x2 + dx},${y2}`, fill: 'none', stroke: '#c0c7ad', 'stroke-width': 1.2, 'stroke-dasharray': '4 6.5', opacity: 0.42 }, cr);
+    let pinches = '', lip = '';
+    for (let j = 0; j < 17; j++) {
+      const k = (j + 0.7) / 18, x = lerp(x1, x2, k), y = lerp(y1, y2, k), n = dx * (1.4 + 0.6 * Math.sin(j * 1.8));
+      pinches += `M${r1(x)},${r1(y)}q${r1(n)},-3 ${r1(n * 1.8)},${-2 - j % 4}`;
+      lip += `M${r1(x + dx)},${r1(y + 2)}q${r1(n * 0.75)},-2 ${r1(n * 1.3)},-2`;
+    }
+    el('path', { d: pinches, fill: 'none', stroke: '#17271c', 'stroke-width': 1.5, opacity: 0.2 }, cr);
+    el('path', { d: lip, fill: 'none', stroke: '#d5d9bf', 'stroke-width': 1, opacity: 0.2 }, cr);
+  });
+  el('path', { d: 'M160,360L380,222L680,158L960,146L1240,158L1540,222L1760,360', fill: 'none', stroke: '#aab6a6', 'stroke-width': 3, opacity: 0.36, 'stroke-linejoin': 'round' }, g0);
+  el('path', { d: 'M168,372L382,236L682,172L960,160L1238,172L1538,236L1752,372', fill: 'none', stroke: '#c9d2b8', 'stroke-width': 1.2, 'stroke-dasharray': '4 6.5', opacity: 0.32 }, g0);
+  // 帽墙与帽檐单独横向走纱，并保留两排缝线。
+  lgrad(id + '-band', [[0, '#424d41'], [1, '#27332b']]);
+  const bandD = 'M280,740Q960,786 1640,740L1654,800Q960,850 266,800Z';
+  el('path', { d: bandD, fill: `url(#${id}-band)` }, g0);
+  const bandCP = uid('cp'); el('path', { d: bandD }, el('clipPath', { id: bandCP }, DEFS));
+  let bandThread = '';
+  for (let y = 738; y < 813; y += 4.6) bandThread += `M264,${r1(y)}Q960,${r1(y + 47)} 1656,${r1(y)}`;
+  el('path', { d: bandThread, fill: 'none', stroke: '#abb69c', 'stroke-width': 0.7, opacity: 0.16, 'clip-path': `url(#${bandCP})` }, g0);
+  el('path', { d: 'M284,752Q960,798 1636,752M270,790Q960,840 1650,790', fill: 'none', stroke: '#b9c3a6', 'stroke-width': 1.3, 'stroke-dasharray': '5 6', opacity: 0.36 }, g0);
+  softStroke(g0, 'M280,740Q960,786 1640,740', '#080e0a', 8, 0.36);
+  lgrad(id + '-brim', [[0, '#3d493d'], [0.35, '#29342c'], [1, '#131c16']]);
   const brimD = 'M266,800Q960,850 1654,800L1690,832Q960,1030 230,832Z';
   el('path', { d: brimD, fill: `url(#${id}-brim)` }, g0);
-  el('path', { d: brimD, fill: 'url(#pat-weave)', opacity: 0.6 }, g0);
-  el('path', { d: 'M300,826Q960,960 1620,826M330,818Q960,930 1590,818', fill: 'none', stroke: '#aab4b0', 'stroke-width': 1.4, 'stroke-dasharray': '8 7', opacity: 0.22 }, g0);
-  el('path', { d: 'M230,832Q960,1030 1690,832', fill: 'none', stroke: '#8c9894', 'stroke-width': 3, opacity: 0.45 }, g0);
-  // 红星（布质）
+  const brimCP = uid('cp'); el('path', { d: brimD }, el('clipPath', { id: brimCP }, DEFS));
+  let brimThread = '';
+  for (let y = 804; y < 960; y += 5) brimThread += `M226,${y}Q960,${y + 162} 1694,${y}`;
+  el('path', { d: brimThread, fill: 'none', stroke: '#a7b496', 'stroke-width': 0.7, opacity: 0.15, 'clip-path': `url(#${brimCP})` }, g0);
+  el('path', { d: 'M300,826Q960,960 1620,826M330,818Q960,930 1590,818', fill: 'none', stroke: '#aab498', 'stroke-width': 1.3, 'stroke-dasharray': '5 6', opacity: 0.29 }, g0);
+  el('path', { d: 'M230,832Q960,1030 1690,832', fill: 'none', stroke: '#8c9880', 'stroke-width': 2.5, opacity: 0.46 }, g0);
+  // 红布贴花：保留原五角星轮廓，去掉金属式三角折面和悬浮投影。
   const sg = G(g0);
   const P = starPts(star.x, star.y, star.R, star.R * 0.4);
-  el('path', { d: poly(P, true), fill: '#000', opacity: 0.18, transform: 'translate(9,13)' }, sg);
-  el('path', { d: poly(P, true), fill: '#000', opacity: 0.25, transform: 'translate(5,7)' }, sg);
-  for (let i = 0; i < 5; i++) {
-    const O = P[i * 2], Ia = P[(i * 2 + 9) % 10], Ib = P[i * 2 + 1];
-    const a = -Math.PI / 2 + (i * 2 * Math.PI) / 5;
-    const l1 = 0.5 + 0.5 * Math.cos(a - 0.5 - Math.PI * 1.25), l2 = 0.5 + 0.5 * Math.cos(a + 0.5 - Math.PI * 1.25);
-    const ramp = [[0, '#8e1610'], [0.5, '#b8241b'], [1, '#d63a2b']];
-    el('path', { d: poly([[star.x, star.y], Ia, O], true), fill: rampHex(ramp, l1) }, sg);
-    el('path', { d: poly([[star.x, star.y], O, Ib], true), fill: rampHex(ramp, l2) }, sg);
+  const starD = poly(P, true), starCP = uid('cp');
+  el('path', { d: starD }, el('clipPath', { id: starCP }, DEFS));
+  el('path', { d: starD, fill: '#080603', opacity: 0.38, transform: 'translate(2,3)' }, sg);
+  lgrad(id + '-red-cloth', [[0, '#c24c38'], [0.45, '#b43b2c'], [1, '#8e2b23']], { x1: 0.1, y1: 0, x2: 0.65, y2: 1 });
+  el('path', { d: starD, fill: `url(#${id}-red-cloth)` }, sg);
+  const face = G(sg, { 'clip-path': `url(#${starCP})` });
+  let redWarp = '', redWeft = '';
+  for (let x = star.x - 150; x < star.x + 150; x += 3.1) redWarp += `M${r1(x)},300C${r1(x - 4)},405 ${r1(x + 3)},487 ${r1(x - 1)},590`;
+  for (let y = 302; y < 590; y += 3.7) redWeft += `M800,${r1(y)}Q960,${r1(y + 4)} 1120,${r1(y - 2)}`;
+  el('path', { d: redWarp, fill: 'none', stroke: '#ed9e73', 'stroke-width': 0.68, opacity: 0.2 }, face);
+  el('path', { d: redWeft, fill: 'none', stroke: '#521710', 'stroke-width': 0.72, opacity: 0.2 }, face);
+  softStroke(face, 'M942,346C960,393 943,448 932,478M870,512Q924,469 979,484', '#5f2019', 8, 0.12);
+  softStroke(face, 'M946,346C964,393 947,448 936,478', '#f0a17b', 5, 0.11);
+  // 折边与回针之间留少量毛边，短纤维都限在贴花内。
+  const P2 = starPts(star.x, star.y, star.R * 0.924, star.R * 0.3696);
+  el('path', { d: starD, fill: 'none', stroke: '#67281e', 'stroke-width': 2.5, opacity: 0.72 }, sg);
+  el('path', { d: poly(P2, true), fill: 'none', stroke: '#eab090', 'stroke-width': 1.15, 'stroke-dasharray': '3.2 4.2', opacity: 0.68, 'stroke-linecap': 'round' }, sg);
+  let fray = '', stitchPucker = '';
+  for (let i = 0; i < P.length; i++) {
+    const A = P[i], B = P[(i + 1) % P.length];
+    for (let j = 1; j <= 8; j++) {
+      const k = j / 9, x = lerp(A[0], B[0], k), y = lerp(A[1], B[1], k), vx = (star.x - x), vy = (star.y - y), len = Math.hypot(vx, vy);
+      const nx = vx / len, ny = vy / len, l = 2.1 + ((i + j) % 3) * 1.1;
+      fray += `M${r1(x + nx)},${r1(y + ny)}l${r1(nx * l + ny)},${r1(ny * l - nx)}`;
+      if (j % 2) stitchPucker += `M${r1(x + nx * 8)},${r1(y + ny * 8)}l${r1(nx * 4)},${r1(ny * 4)}`;
+    }
   }
-  el('path', { d: poly(P, true), fill: 'url(#pat-weave)', opacity: 0.9 }, sg);
-  el('path', { d: poly(P, true), fill: 'url(#pat-grit)', opacity: 0.25 }, sg);
-  const P2 = starPts(star.x, star.y, star.R * 0.9, star.R * 0.36);
-  el('path', { d: poly(P2, true), fill: 'none', stroke: '#f6c7b4', 'stroke-width': 2, 'stroke-dasharray': '6 5', opacity: 0.5 }, sg);
-  el('path', { d: poly(P, true), fill: 'none', stroke: '#5a0a07', 'stroke-width': 2.2, opacity: 0.55 }, sg);
-  return { g: g0, star, starG: sg, starPath: poly(P, true), crownD };
+  el('path', { d: fray, fill: 'none', stroke: '#efae83', 'stroke-width': 0.7, opacity: 0.43, 'clip-path': `url(#${starCP})` }, sg);
+  el('path', { d: stitchPucker, fill: 'none', stroke: '#70271e', 'stroke-width': 1.4, opacity: 0.24 }, sg);
+  return { g: g0, star, starG: sg, starPath: starD, crownD, underBrimBackdrop };
 }
 
 /* ---------- 斯诺的相机（正面，镜头可特写） ---------- */
@@ -495,7 +581,7 @@ function buildNotebook(parent, o) {
     el('path', { d: cursivePath(-338, y, i === 11 ? 170 : 300 + R() * 30, R, 10) }, old);
   }
   const pageR = G(g0, { fill: 'none', stroke: '#141b2c', 'stroke-width': 2.1, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
-  return { g: g0, m, pageR, R };
+  return { g: g0, m, pageR, old, R };
 }
 
 /* ---------- 钢笔（笔尖在原点） ---------- */
