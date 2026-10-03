@@ -2,13 +2,13 @@
 /* =============================================================
  * 逐帧导出视频（帧精确，与电脑性能无关）
  *
- * 依赖：Node.js 18+、Playwright、ffmpeg
+ * 依赖：Node.js 24+、Playwright、ffmpeg
  *   npm i playwright            # 若尚未安装
  *   npx playwright install chromium
  *   ffmpeg 需在 PATH 中，或用 --ffmpeg 指定路径
  *
  * 用法：
- *   node render.js                          # 1920×1080，30fps，输出 保安-李长林.mp4
+ *   node render.js                          # 1280×720，24fps，输出 保安-李长林.mp4
  *   node render.js --fps 25 --out a.mp4     # 25fps
  *   node render.js --scale 2                # 3840×2160
  *   node render.js --frames frames          # 只导出 PNG 序列（不需要 ffmpeg）
@@ -18,6 +18,7 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const {pathToFileURL}=require('url');
 const { spawn } = require('child_process');
 
 const args = {};
@@ -25,13 +26,15 @@ for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
   if (a.startsWith('--')) { const k = a.slice(2), v = process.argv[i + 1]; if (!v || v.startsWith('--')) args[k] = true; else { args[k] = v; i++; } }
 }
-const fps = +(args.fps || 30);
-const scale = +(args.scale || 1);
+const fps = +(args.fps || 24);
+const scale = +(args.scale || (2/3));
 const out = args.out || '保安-李长林.mp4';
 const ffmpegBin = args.ffmpeg || 'ffmpeg';
 const q = new URLSearchParams({ render: '1' });
 ['li', 'snow', 'deed'].forEach(k => { if (args[k]) q.set(k, args[k]); });
-const url = 'file://' + path.resolve(__dirname, 'index.html').replace(/\\/g, '/') + '?' + q.toString();
+const indexURL = pathToFileURL(path.resolve(__dirname, 'index.html'));
+indexURL.search = q.toString();
+const url = indexURL.href;
 
 let chromium;
 try { ({ chromium } = require('playwright')); } catch (e) {
@@ -42,7 +45,7 @@ try { ({ chromium } = require('playwright')); } catch (e) {
 const workersN = Math.max(1, +(args.workers || Math.min(6, Math.max(1, os.cpus().length - 1))));
 
 async function openPage() {
-  const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
+  const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: scale });
   page.on('pageerror', e => console.error('页面错误：', e.message));
   await page.goto(url);
@@ -54,7 +57,7 @@ async function openPage() {
   const pages = await Promise.all(Array.from({ length: workersN }, openPage));
   const duration = pages[0].duration;
   const from = +(args.from || 0), to = Math.min(+(args.to || duration), duration);
-  const n = Math.ceil((to - from) * fps - 1e-6);
+  const n = Math.round((to - from) * fps);
   console.log(`时长 ${duration}s，导出 ${from}–${to}s，共 ${n} 帧 @ ${fps}fps，${1920 * scale}×${1080 * scale}，并行 ${workersN} 路`);
 
   let ff = null;
@@ -82,13 +85,18 @@ async function openPage() {
     for (;;) {
       const i = next++;
       if (i >= n) return;
-      await page.evaluate(t => window.__anim.renderAt(t), from + i / fps);
+      await page.evaluate(t => (window.__anim.renderAtAsync || window.__anim.renderAt)(t), from + i / fps);
       done.set(i, await page.screenshot({ type: 'png' }));
       await flush();
     }
   }));
   await flush();
-  if (ff) { ff.stdin.end(); await new Promise(r => ff.on('close', r)); }
+  if (ff) {
+    ff.stdin.end();
+    const code = await new Promise(r => ff.on('close', r));
+    if(code !== 0) throw new Error('ffmpeg 编码失败，退出码 '+code);
+
+  }
   await Promise.all(pages.map(p => p.browser.close()));
   console.log(`\n完成：${args.frames ? args.frames + '/' : out}`);
 })();

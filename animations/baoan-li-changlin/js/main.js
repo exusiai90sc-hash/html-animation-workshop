@@ -16,9 +16,9 @@
   // 图层顺序（自下而上）
   const root = G(svg, { id: 'root' });
   const L = {};
-  ['s1', 's2', 's1o', 's3', 's3b', 'cloth', 's4', 's4ink', 's56', 's7', 's8', 'flame', 's11b', 's12a', 's12b'].forEach(n => { L[n] = G(root, { id: 'L-' + n }); });
+  ['s1', 's2', 's1o', 's3', 's3b', 'cloth', 's4', 's4ink', 's56', 's7', 's8', 'terrain', 'flame', 's11b', 's12a', 's12b'].forEach(n => { L[n] = G(root, { id: 'L-' + n }); });
 
-  const builders = ['buildS1', 'buildS2', 'buildS3', 'buildCloth', 'buildS3b', 'buildS4', 'buildS56', 'buildS7', 'buildS8', 'buildS11b', 'buildS12']
+  const builders = ['buildS1', 'buildS2', 'buildS3', 'buildCloth', 'buildS3b', 'buildS4', 'buildS56', 'buildS7', 'buildS8', 'buildAbstractFinal']
     .map(n => window[n]).filter(f => typeof f === 'function');
   builders.forEach(b => b(L));
   SCENES.forEach(s => { s._on = null; });
@@ -81,7 +81,9 @@
     for (const s of SCENES) if (s._on && s.fx) { fctx.save(); s.fx(fctx, t); fctx.restore(); }
     fctx.setTransform(1, 0, 0, 1, 0, 0);
     // 后期
-    const [gc, ga] = gradeAt(t);
+    const baseGrade = gradeAt(t);
+    const finalWash = smoothstep(51.8, 54.1, t);
+    const [gc, ga] = [baseGrade[0], baseGrade[1] * (1 - finalWash)];
     gradeEl.style.background = gc;
     gradeEl.style.opacity = ga.toFixed(3);
     flashEl.style.background = POST.flashColor;
@@ -150,37 +152,50 @@
   const time = document.getElementById('time');
   const clean = params.has('clean') || params.has('render');
   if (clean) ui.style.display = 'none';
-  let playing = false, t0wall = 0, tStart = 0;
+  let playing = false, playbackIntent = false, t0wall = 0, tStart = 0, playEpoch = 0, seekEpoch = 0;
   function play() {
+    playbackIntent = true;
     if (lastT >= DURATION - 1e-3) tStart = 0; else tStart = Math.max(0, lastT);
     t0wall = performance.now();
     playing = true;
     btn.textContent = '❚❚';
-    requestAnimationFrame(loop);
+    const epoch = ++playEpoch;
+    requestAnimationFrame(now => loop(now, epoch));
   }
-  function pause() { playing = false; btn.textContent = '▶'; }
-  function loop(now) {
-    if (!playing) return;
+  function suspendPlayback() { ++playEpoch; playing = false; btn.textContent = playbackIntent ? '❚❚' : '▶'; }
+  function pause() { playbackIntent = false; suspendPlayback(); }
+  async function loop(now, epoch) {
+    if (!playing || epoch !== playEpoch) return;
     const t = tStart + (now - t0wall) / 1000;
-    if (t >= DURATION) { renderAt(DURATION); pause(); return; }
-    renderAt(t);
-    requestAnimationFrame(loop);
+    if (t >= DURATION) { await renderAtAsync(DURATION); if(epoch === playEpoch) pause(); return; }
+    await renderAtAsync(t);
+    if(playing && epoch === playEpoch) requestAnimationFrame(now => loop(now, epoch));
   }
-  function seek(t) { const wasPlaying = playing; pause(); renderAt(t); if (wasPlaying) play(); }
+  let renderTicket = 0;
+  async function renderAtAsync(tReal) {
+    const ticket = ++renderTicket;
+    const time = clamp(Number(tReal) || 0, 0, DURATION);
+    await ready;
+    if (window.FINAL_SEQUENCE) await window.FINAL_SEQUENCE.prepareAt(warp(time));
+    if (ticket !== renderTicket) return false;
+    renderAt(time);
+    return true;
+  }
+  async function seek(t) { const request=++seekEpoch; suspendPlayback(); const epoch=playEpoch; await renderAtAsync(t); if (request===seekEpoch && playbackIntent && epoch===playEpoch) play(); }
   function updateUI(t) {
     if (clean) return;
     bar.value = (t / DURATION * 1000).toFixed(0);
     time.textContent = t.toFixed(2).padStart(5, '0') + ' / ' + DURATION.toFixed(3);
   }
-  btn.addEventListener('click', () => (playing ? pause() : play()));
+  btn.addEventListener('click', () => (playbackIntent ? pause() : play()));
   bar.addEventListener('input', () => seek(bar.value / 1000 * DURATION));
-  document.getElementById('restart').addEventListener('click', () => { seek(0); play(); });
+  document.getElementById('restart').addEventListener('click', async () => { await seek(0); play(); });
   document.getElementById('guidesBtn').addEventListener('click', () => { showGuides = !showGuides; updateGuides(lastT); });
   document.getElementById('fs').addEventListener('click', () => { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); });
   addEventListener('keydown', e => {
-    if (e.code === 'Space') { e.preventDefault(); playing ? pause() : play(); }
-    else if (e.code === 'ArrowRight') seek(lastT + (e.shiftKey ? 1 / 30 : 1));
-    else if (e.code === 'ArrowLeft') seek(lastT - (e.shiftKey ? 1 / 30 : 1));
+    if (e.code === 'Space') { e.preventDefault(); playbackIntent ? pause() : play(); }
+    else if (e.code === 'ArrowRight') seek(lastT + (e.shiftKey ? 1 / 24 : 1));
+    else if (e.code === 'ArrowLeft') seek(lastT - (e.shiftKey ? 1 / 24 : 1));
     else if (e.code === 'Home') seek(0);
     else if (e.code === 'KeyG') { showGuides = !showGuides; updateGuides(lastT); }
     else if (e.code === 'KeyF') document.getElementById('fs').click();
@@ -198,8 +213,8 @@
   const ready = texReady.then(() => {
     const imgs = Array.from(document.querySelectorAll('image')).map(i => i.getAttribute('href') || '').filter(h => h);
     return Promise.all([...new Set(imgs)].map(h => new Promise((res,rej) => { const im = new Image(); im.onload = () => res(); im.onerror = () => rej(new Error('Image failed to load')); im.src = h; })));
-  }).then(() => (window.BURN_READY || Promise.resolve())).then(() => { renderAt(lastT < 0 ? 0 : lastT); });
-  window.__anim = { duration: DURATION, renderAt, play, pause, seek, ready, anchors: { design: DESIGN, actual: ACTUAL } };
+  }).then(() => (window.BURN_READY || Promise.resolve())).then(() => window.FINAL_SEQUENCE ? window.FINAL_SEQUENCE.ready : Promise.resolve()).then(async () => { const time=lastT < 0 ? 0 : lastT; if(window.FINAL_SEQUENCE) await window.FINAL_SEQUENCE.prepareAt(warp(time)); renderAt(time); });
+  window.__anim = { duration: DURATION, renderAt, renderAtAsync, play, pause, seek, ready, anchors: { design: DESIGN, actual: ACTUAL } };
 
   const t0 = parseFloat(params.get('t') || '0') || 0;
   renderAt(t0);

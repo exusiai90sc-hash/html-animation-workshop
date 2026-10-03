@@ -141,6 +141,7 @@ async function makeScene(sourceDir,options={}){
       if(!refs.size)return xml;
       return xml.replace(/^<svg\b[^>]*>/,opening=>opening+'<defs>'+[...refs.values()].join('')+'</defs>');
     }
+    if(opts.skipDefinitions&&node?.tagName?.toLowerCase()==='defs')return '';
     if(node?.nodeType===3)return escapeXML(node.textContent);
     if(!node)return '';
     if(opts.pruneHidden&&node.style?.display==='none')return '';
@@ -169,10 +170,18 @@ async function makeScene(sourceDir,options={}){
     return '<'+node.tagName+at+'>'+escapeXML(node._text||'')+node.childNodes.map(c=>serialize(c,opts)).join('')+'</'+node.tagName+'>';
   }
   doc._serialize=serialize;
-  class LocalImage extends native.Image {set src(h){this._localSrc=h;loadAsset(String(h)).then(rec=>{super.src=rec.bytes;}).catch(error=>{if(this.onerror)this.onerror(error);else throw error;});}get src(){return this._localSrc||'';}}
+  class LocalImage extends native.Image {
+    set src(h){this._localSrc=h;this._sourceReady=loadAsset(String(h)).then(rec=>{super.src=rec.bytes;});this._sourceReady.catch(error=>{if(this.onerror)this.onerror(error);});}
+    get src(){return this._localSrc||'';}
+    async decode(){await this._sourceReady;return super.decode();}
+  }
   class LocalURL extends URL {};
   LocalURL.createObjectURL=blob=>{if(!blob.bytes)throw new Error('Only local canvas object URLs are supported');const id='blob:local-scene/'+(++blobId);blobs.set(id,blob.bytes);return id;};LocalURL.revokeObjectURL=id=>blobs.delete(id);
   const ctx={console,document:doc,Image:LocalImage,HTMLImageElement:LocalImage,URL:LocalURL,URLSearchParams,location:{href:pathToFileURL(indexPath).href+'?render=1',search:options.search||'?render=1',protocol:'file:'},innerWidth:1920,innerHeight:1080,devicePixelRatio:1,performance:{now:()=>0},requestAnimationFrame:()=>0,cancelAnimationFrame:()=>{},setTimeout,clearTimeout,queueMicrotask,addEventListener:()=>{},removeEventListener:()=>{},navigator:{userAgent:'LocalSoftwareArtifactRenderer'},Blob,TextEncoder,TextDecoder,ImageData:native.ImageData,Path2D:native.Path2D,DOMMatrix:native.DOMMatrix,getComputedStyle:el=>el.style};
+  // Native Canvas snapshots retain GPU-like surfaces; static Image assets avoid per-frame native memory growth.
+  const staticImageDecodes=[];
+  ctx.__makeStaticImage=c=>{const im=new native.Image();im.src=(c._canvas||c).toBuffer('image/png');staticImageDecodes.push(im.decode());return im;};
+  ctx.__waitStaticImages=()=>Promise.all(staticImageDecodes.splice(0));
   ctx.window=ctx;ctx.self=ctx;ctx.globalThis=ctx;vm.createContext(ctx);
   for(const script of scripts){if(!script.src){if(script.inline.trim())throw new Error('Inline executable script found; only explicit original source files allowed');continue;}const full=allowedLocal(script.src);const code=fs.readFileSync(full,'utf8');manifest.scripts.push({src:script.src,path:full,sha256:hash(code)});vm.runInContext(code,ctx,{filename:full,timeout:120000});}
   if(!ctx.__anim?.ready||typeof ctx.__anim.renderAt!=='function')throw new Error('Original scene did not expose __anim.ready/renderAt');
@@ -181,7 +190,21 @@ async function makeScene(sourceDir,options={}){
   await Promise.all([...pending]);
   const ids=new Proxy(Object.create(null),{get(t,k){return typeof k==='string'?doc.getElementById(k):undefined;},ownKeys(){return [...new Set(doc.querySelectorAll('[id]').map(n=>n.id))];},getOwnPropertyDescriptor(t,k){const value=doc.getElementById(k);return value?{enumerable:true,configurable:true,value}:undefined;}});
   const canvas=Object.fromEntries(doc.querySelectorAll('canvas[id]').map(c=>[c.id,c._canvas]));const canvases=new Map(Object.entries(canvas));
-  return {ctx,ids,svg:ids.world,document:doc,canvas,canvases,assets,manifest,sourceManifest:manifest,serialize,renderAt:t=>ctx.__anim.renderAt(t),dispose(){ctx.__anim.pause();}};
+  async function syncAssets(){
+    // Dynamic image hrefs are set during seek. Decode the current frame before
+    // serializing SVG; no stale terrain frame is allowed into a screenshot.
+    for(const n of doc.querySelectorAll('image,use')){
+      const h=n.getAttribute('href')||n.getAttribute('xlink:href');
+      if(h&&!h.startsWith('#')) await loadAsset(h);
+    }
+    await Promise.all([...pending]);
+  }
+  async function renderAtAsync(t){
+    if(ctx.__anim.renderAtAsync) await ctx.__anim.renderAtAsync(t);
+    else ctx.__anim.renderAt(t);
+    await syncAssets();
+  }
+  return {ctx,ids,svg:ids.world,document:doc,canvas,canvases,assets,manifest,sourceManifest:manifest,serialize,syncAssets,renderAt:t=>ctx.__anim.renderAt(t),renderAtAsync,dispose(){ctx.__anim.pause();}};
 }
 module.exports={makeScene,Element,CanvasElement,serialize:(node,options)=>node.ownerDocument._serialize(node,options)};
 if(require.main===module){(async()=>{const dir=process.argv[2]||path.resolve(__dirname,'..'),out=process.argv[3];const scene=await makeScene(dir);scene.renderAt(25.5);const svg=scene.serialize(scene.svg,{pruneHidden:true,omitRootTransform:true});if(out)fs.writeFileSync(out,svg);console.log(JSON.stringify({duration:scene.ctx.__anim.duration,scripts:scene.manifest.scripts.length,assets:scene.manifest.assets.length,svgBytes:Buffer.byteLength(svg),sceneTime:25.5,canvas:Object.fromEntries(Object.entries(scene.canvas).map(([id,c])=>[id,[c.width,c.height]])),grade:scene.ids.grade.style.cssText,world:scene.svg.style.cssText}));})().catch(e=>{console.error(e);process.exit(1);});}

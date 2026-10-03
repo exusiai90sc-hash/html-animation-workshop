@@ -10,11 +10,12 @@ const args = Object.fromEntries(process.argv.slice(2).map(value => {
 const number = (key, fallback) => args[key] === undefined ? fallback : Number(args[key]);
 async function main() {
   const source = path.resolve(args.source), out = path.resolve(args.out);
-  const start = number('start', 24.7), end = number('end', 28.85);
-  const fps = number('fps', 60), width = number('width', 1280);
+  const start = number('start', 0), end = number('end', 60.505);
+  const fps = number('fps', 24), width = number('width', 1280);
   const part = number('part', 0), parts = number('parts', 1);
   if (![start,end,fps,width,part,parts].every(Number.isFinite) || end < start || fps <= 0 || width <= 0 || !Number.isInteger(parts) || !Number.isInteger(part) || part < 0 || part >= parts) throw new Error('渲染范围、尺寸或分片参数无效');
   fs.mkdirSync(out, {recursive:true});
+  if(fs.existsSync(path.join(out,'.pause'))){console.log('帧目录有.pause，当前批次安全停止');process.exitCode=75;return;}
   const fileAt = i => path.join(out, `f${String(i).padStart(5,'0')}.png`);
   if (args._indices) {
     // 每批退出进程，释放 SVG/Canvas 的原生内存，适合长段逐帧输出。
@@ -36,6 +37,7 @@ async function main() {
   const indices = [];
   for (let i = part; i < Math.round((end-start)*fps); i += parts) {
     const time = start + i/fps;
+    if(time >= end) continue;
     if (args.onlyFrom !== undefined && time < Number(args.onlyFrom)) continue;
     if (args.onlyTo !== undefined && time > Number(args.onlyTo)) continue;
     if (args.resume === '1' && fs.existsSync(fileAt(i))) continue;

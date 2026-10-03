@@ -1,0 +1,35 @@
+{
+  "creation": "built-in imagegen; independent transparent PNG artwork",
+  "runtime": "Embedded without changing source PNG bytes in js/最终分层素材.js",
+  "files": {
+    "background": {
+      "name": "clean-background-v2.png",
+      "sha256": "a1631efddc7b136c0df4406723899bf1ae302e641dd7a163fa1b42f0fa3ddf86",
+      "bytes": 2018017
+    },
+    "villagers": {
+      "name": "villagers-transparent-v2.png",
+      "sha256": "7c83f18badf12052fad65bee33c62463c99bb2ba26327d5022d42361352a2571",
+      "bytes": 879298
+    },
+    "smoke": {
+      "name": "battle-smoke-atlas-v3.png",
+      "sha256": "cc60451a10f5abcc72ea2dd27249b3cd8d6ef6ec9aa336813b319ca4df0d0a75",
+      "bytes": 1211675
+    },
+    "march": {
+      "name": "march-walk-atlas-v2.png",
+      "sha256": "0bf01940f62078dc5f75fed27befe4d6dac7f0da9d3a0cc949eaa8118a369bca",
+      "bytes": 775763
+    }
+  },
+  "timeAxisSeconds": 60.505,
+  "videoContract": {
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "frames": 1452,
+    "durationSeconds": 60.5,
+    "audio": false
+  }
+}
